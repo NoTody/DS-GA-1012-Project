@@ -14,12 +14,13 @@ def get_args_parser():
 	parser.add_argument("--lr", type=float, default=2e-5)
 	parser.add_argument("--num_labels", type=int, default=4)
 	parser.add_argument("--weight_decay", type=float, default=0.0)
+	parser.add_argument("--scheduler_name", type=str, default="cosine")
 	return parser
 
 if __name__ == '__main__':
 	# fix seed
 	seed_everything(42)
-	
+	AVAIL_GPUS = min(1, torch.cuda.device_count())
 	# parser
 	parser = argparse.ArgumentParser('ADV', parents=[get_args_parser()])
   	args = parser.parse_args([])

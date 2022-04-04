@@ -11,16 +11,16 @@ from torch.optim import AdamW
 from torchmetrics import Accuracy, F1Score
 import pandas as pd
 import numpy as np
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoConfig, get_linear_schedule_with_warmup
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoConfig
+from transformers import get_linear_schedule_with_warmup, get_cosine_schedule_with_warmup
 from data_utils import *
 from model_utils import *
 
 class LitTransformer(LightningModule):
-    """
-    Define pytorch lightning module
-    """
     def __init__(self, args):
+
         super().__init__()
+
         # Set our init args as class attributes
         self.dataset_name = args.dataset_name
         self.learning_rate = args.lr
@@ -38,10 +38,12 @@ class LitTransformer(LightningModule):
 
         # Define config
         self.config = AutoConfig.from_pretrained(self.model_name, 
-                                                 num_labels=self.num_labels)
+                                                 num_labels=self.num_labels,
+                                                 output_hidden_states=True)
 
         # Define hyperparameters
         self.weight_decay = args.weight_decay
+        self.scheduler_name = args.scheduler_name
 
         # Define PyTorch model
         self.model = model_init(self.model_name, self.config)
@@ -61,11 +63,12 @@ class LitTransformer(LightningModule):
         b_input_ids, b_attn_mask, b_labels = batch['input_ids'], batch['attention_mask'], batch['labels']
         outputs = self.model(b_input_ids, b_attn_mask)
         logits = outputs.logits
+        hidden_states = outputs.hidden_states
         criterion = nn.CrossEntropyLoss()
         loss = criterion(logits, b_labels)
         preds = torch.argmax(logits, dim=1)
         return {'loss': loss, 'preds': preds, 'input_ids': b_input_ids, 
-                'labels': b_labels, 'logits': logits}
+                'labels': b_labels, 'logits': logits, 'hidden_states': hidden_states}
 
     def training_step(self, batch, batch_idx):
         forward_outputs = self.forward_one_epoch(batch, batch_idx)
@@ -73,8 +76,8 @@ class LitTransformer(LightningModule):
         b_input_ids = forward_outputs['input_ids']
         # Tensorboard logging for model graph and loss
         #self.logger.experiment.add_graph(self.model, input_to_model=b_input_ids, verbose=False, use_strict_trace=True)
-        self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, self.current_epoch)
-        self.log("train_loss", train_loss, on_epoch=False, on_step=True, prog_bar=True)
+        self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, step=self.global_step)
+        #self.log("train_loss", train_loss, on_epoch=False, on_step=True, prog_bar=True)
         return train_loss
 
     def validation_step(self, batch, batch_idx):
@@ -85,7 +88,7 @@ class LitTransformer(LightningModule):
         self.accuracy(preds, labels)
         self.f1(preds, labels)
         # Calling self.log will surface up scalars for you in TensorBoard
-        self.logger.experiment.add_scalars('loss', {'val_loss': val_loss}, self.current_epoch)
+        self.logger.experiment.add_scalars('loss', {'val_loss': val_loss}, step=self.global_step)
         #self.log("val_loss", val_loss, on_epoch=True, on_step=False, prog_bar=True)
         # self.log("val_acc", self.accuracy, on_epoch=True, on_step=False, prog_bar=True)
         # self.log("val_f1", self.f1, on_epoch=True, on_step=False, prog_bar=True)
@@ -95,12 +98,19 @@ class LitTransformer(LightningModule):
 
     def test_step(self, batch, batch_idx):
         forward_outputs = self.forward_one_epoch(batch, batch_idx)
-        logits = forward_outputs['logits']
+        preds = forward_outputs['preds']
         b_labels = forward_outputs['labels']
         test_loss = forward_outputs['loss']
+        #cls_hidden_states = forward_outputs['hidden_states'][0][:, 0, :]
         # Reuse the validation_step for testing
         # Visualize dimensionality reduced labels
-        self.logger.experiment.add_embedding(logits, label_img=b_labels)
+        # print(cls_hidden_states.shape)
+        # print(b_labels.shape)
+        #self.logger.experiment.add_embedding(cls_hidden_states, metadata=b_labels.tolist(), global_step=self.global_step)
+        self.accuracy(preds, b_labels)
+        self.f1(preds, b_labels)
+        self.log("test_acc", self.accuracy)
+        self.log("test_f1", self.f1)
         return test_loss
 
     def configure_optimizers(self):
@@ -119,11 +129,18 @@ class LitTransformer(LightningModule):
         # define optimizer / scheduler
         optimizer = AdamW(optimizer_grouped_parameters, lr=self.learning_rate)
         self.warmup_steps = 0.06 * self.total_steps
-        scheduler = get_linear_schedule_with_warmup(
-            optimizer,
-            num_warmup_steps=self.warmup_steps,
-            num_training_steps=self.total_steps,
-        )
+        if self.scheduler_name == "cosine":
+          scheduler = get_cosine_schedule_with_warmup(
+              optimizer,
+              num_warmup_steps=self.warmup_steps,
+              num_training_steps=self.total_steps,
+          )
+        elif self.scheduler_name == "linear":
+          scheduler = get_linear_schedule_with_warmup(
+              optimizer,
+              num_warmup_steps=self.warmup_steps,
+              num_training_steps=self.total_steps,
+          )
         #scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
