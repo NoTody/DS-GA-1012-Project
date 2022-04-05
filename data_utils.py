@@ -11,20 +11,20 @@ def encode_data(dataset, dataset_name, tokenizer, max_seq_length=128):
     transformer-style model.
     """
     if dataset_name == 'snli':
-      premise = dataset.premise.values.tolist()
-      hypothesis = dataset.hypothesis.values.tolist()
+        premise = dataset.premise.values.tolist()
+        hypothesis = dataset.hypothesis.values.tolist()
     elif dataset_name == 'imdb' or dataset_name == 'agnews':
-      text = dataset.text.values.tolist()
-
-    input_ids = torch.empty((len(dataset),max_seq_length), dtype=torch.long)
-    attention_mask = torch.empty((len(dataset),max_seq_length), dtype=torch.long)
+        text = dataset.text.values.tolist()
+    
+    input_ids = torch.empty((len(dataset), max_seq_length), dtype=torch.long)
+    attention_mask = torch.empty((len(dataset), max_seq_length), dtype=torch.long)
     print("Encoding data ...")
     for i in range(len(dataset)):
         if dataset_name == 'snli':
-            sequence = tokenizer.encode_plus(premise[i], hypothesis[i], return_tensors="pt",
+            sequence = tokenizer.encode_plus(str(premise[i]), str(hypothesis[i]), return_tensors="pt",
                                              max_length=max_seq_length, padding="max_length", truncation=True)
         elif dataset_name == 'imdb' or dataset_name == 'agnews':
-            sequence = tokenizer.encode_plus(text[i], return_tensors="pt", max_length=max_seq_length, 
+            sequence = tokenizer.encode_plus(str(text[i]), return_tensors="pt", max_length=max_seq_length, 
                                              padding="max_length", truncation=True)
         else:
             print('Invalid dataset name')

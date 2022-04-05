@@ -22,6 +22,8 @@ class LitTransformer(LightningModule):
         super().__init__()
 
         # Set our init args as class attributes
+        #self.num_devices = args.num_devices
+        #self.accumulate_grad_batches = args.accumulate_grad_batches
         self.dataset_name = args.dataset_name
         self.learning_rate = args.lr
         self.batch_size = args.batch_size
@@ -76,7 +78,7 @@ class LitTransformer(LightningModule):
         b_input_ids = forward_outputs['input_ids']
         # Tensorboard logging for model graph and loss
         #self.logger.experiment.add_graph(self.model, input_to_model=b_input_ids, verbose=False, use_strict_trace=True)
-        self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, step=self.global_step)
+        self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, self.global_step)
         #self.log("train_loss", train_loss, on_epoch=False, on_step=True, prog_bar=True)
         return train_loss
 
@@ -88,7 +90,7 @@ class LitTransformer(LightningModule):
         self.accuracy(preds, labels)
         self.f1(preds, labels)
         # Calling self.log will surface up scalars for you in TensorBoard
-        self.logger.experiment.add_scalars('loss', {'val_loss': val_loss}, step=self.global_step)
+        self.logger.experiment.add_scalars('loss', {'val_loss': val_loss}, self.global_step)
         #self.log("val_loss", val_loss, on_epoch=True, on_step=False, prog_bar=True)
         # self.log("val_acc", self.accuracy, on_epoch=True, on_step=False, prog_bar=True)
         # self.log("val_f1", self.f1, on_epoch=True, on_step=False, prog_bar=True)
@@ -151,21 +153,21 @@ class LitTransformer(LightningModule):
       # dataset setup
       if stage == "fit" or stage is None:
         # train dataset assign
-        train_path = self.dataset_name + "_train.csv"
+        train_path = "./datasets/" + self.dataset_name + "_train.csv"
         df_train = pd.read_csv(train_path)
         self.ds_train = SequenceDataset(df_train, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
         # val dataset assign
-        val_path = self.dataset_name + "_val.csv"
+        val_path = "./datasets/" + self.dataset_name + "_val.csv"
         df_val = pd.read_csv(val_path)
         self.ds_val = SequenceDataset(df_val, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
         # Calculate total steps
-        tb_size = self.batch_size * max(1, self.trainer.num_devices)
+        tb_size = self.batch_size * max(1, self.trainer.gpus)
         ab_size = self.trainer.accumulate_grad_batches * float(self.trainer.max_epochs)
         self.total_steps = (len(df_train) // tb_size) // ab_size
         print(f"total step: {self.total_steps}")
       if stage == "test" or stage is None:
         # test dataset assign
-        test_path = self.dataset_name + "_test.csv"
+        test_path = "./datasets/" + self.dataset_name + "_test.csv"
         df_test = pd.read_csv(test_path)
         self.ds_test = SequenceDataset(df_test, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
 
