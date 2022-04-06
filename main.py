@@ -1,12 +1,14 @@
 import pl_module
 from pl_module import *
 from pytorch_lightning import loggers as pl_loggers
+from pytorch_lightning.strategies.ddp import DDPStrategy
 import argparse
 from argparse import ArgumentParser
 
 def get_args_parser():
     parser = ArgumentParser('MAIN', add_help=False)
     # config parameters
+    parser.add_argument("--tb_save_dir", type=str, default="../")
     parser.add_argument("--accumulate_grad_batches", type=int, default=1)
     parser.add_argument("--num_nodes", type=int, default=1)
     parser.add_argument("--num_devices", type=int, default=2)
@@ -49,7 +51,6 @@ if __name__ == '__main__':
     bar = TQDMProgressBar(refresh_rate=20, process_position=0)
     early_stop_callback = EarlyStopping(monitor="val_f1", min_delta=0.00, patience=2, verbose=False, mode="max")
     checkpoint_callback = ModelCheckpoint(
-        # dirpath=os.getcwd(),
         save_top_k=1,
         verbose=True,
         monitor='val_f1',
@@ -57,10 +58,12 @@ if __name__ == '__main__':
         save_weights_only=False
     )
     # Define Logger
-    tb_logger = pl_loggers.TensorBoardLogger(save_dir="../lightning_logs/") 
+    tb_logger = pl_loggers.TensorBoardLogger(save_dir=args.tb_save_dir) 
     # Initialize the trainer
-    trainer = Trainer(precision=16, gpus=args.num_devices, accelerator="gpu", num_nodes=args.num_nodes, strategy="ddp",
-                    max_epochs=args.max_epochs, logger=tb_logger, callbacks=[checkpoint_callback, early_stop_callback, bar])
+    trainer = Trainer(precision=16, gpus=args.num_devices, accelerator="gpu", num_nodes=args.num_nodes,
+                    DDPStrategy(find_unused_parameters=False), max_epochs=args.max_epochs, logger=tb_logger, 
+                    callbacks=[checkpoint_callback, early_stop_callback, bar]
+                    )
     
     if args.mode == "train":
         print("Train mode")

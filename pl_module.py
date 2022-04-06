@@ -20,36 +20,35 @@ class LitTransformer(LightningModule):
     def __init__(self, args):
 
         super().__init__()
-
+   
         # Set our init args as class attributes
-        #self.num_devices = args.num_devices
-        #self.accumulate_grad_batches = args.accumulate_grad_batches
-        self.save_hyperparameters()
-        # self.dataset_name = args.dataset_name
-        # self.learning_rate = args.lr
-        # self.batch_size = args.batch_size
-        # self.max_seq_length = args.max_seq_length
-        # self.model_name = args.model_name
+        self.num_devices = args.num_devices
+        self.accumulate_grad_batches = args.accumulate_grad_batches
+        self.dataset_name = args.dataset_name
+        self.learning_rate = args.lr
+        self.batch_size = args.batch_size
+        self.max_seq_length = args.max_seq_length
+        self.model_name = args.model_name
 
-        # # Dataset specific attributes
-        # self.num_labels = args.num_labels
-        # self.num_workers = args.num_workers
+        # Dataset specific attributes
+        self.num_labels = args.num_labels
+        self.num_workers = args.num_workers
 
         # Define tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(self.hparams.args.model_name, 
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, 
                                                        use_fast=True)
 
         # Define config
-        self.config = AutoConfig.from_pretrained(self.hparams.args.model_name, 
-                                                 num_labels=self.hparams.args.num_labels,
+        self.config = AutoConfig.from_pretrained(self.model_name, 
+                                                 num_labels=self.num_labels,
                                                  output_hidden_states=True)
 
         # Define hyperparameters
-        self.weight_decay = self.hparams.args.weight_decay
-        self.scheduler_name = self.hparams.args.scheduler_name
+        self.weight_decay = args.weight_decay
+        self.scheduler_name = args.scheduler_name
 
         # Define PyTorch model
-        self.model = model_init(self.hparams.args.model_name, self.config)
+        self.model = model_init(self.model_name, self.config)
 
         # Define metrics
         self.accuracy = Accuracy()
@@ -130,7 +129,7 @@ class LitTransformer(LightningModule):
             },
         ]
         # define optimizer / scheduler
-        optimizer = AdamW(optimizer_grouped_parameters, lr=self.hparams.args.learning_rate)
+        optimizer = AdamW(optimizer_grouped_parameters, lr=self.learning_rate)
         self.warmup_steps = 0.06 * self.total_steps
         if self.scheduler_name == "cosine":
           scheduler = get_cosine_schedule_with_warmup(
@@ -154,29 +153,29 @@ class LitTransformer(LightningModule):
       # dataset setup
       if stage == "fit" or stage is None:
         # train dataset assign
-        train_path = "./datasets/" + self.hparams.args.dataset_name + "_train.csv"
+        train_path = "./datasets/" + self.dataset_name + "_train.csv"
         df_train = pd.read_csv(train_path)
-        self.ds_train = SequenceDataset(df_train, self.hparams.args.dataset_name, self.tokenizer, max_seq_length=self.hparams.args.max_seq_length)
+        self.ds_train = SequenceDataset(df_train, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
         # val dataset assign
-        val_path = "./datasets/" + self.hparams.args.dataset_name + "_val.csv"
+        val_path = "./datasets/" + self.dataset_name + "_val.csv"
         df_val = pd.read_csv(val_path)
-        self.ds_val = SequenceDataset(df_val, self.hparams.args.dataset_name, self.tokenizer, max_seq_length=self.hparams.args.max_seq_length)
+        self.ds_val = SequenceDataset(df_val, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
         # Calculate total steps
-        tb_size = self.hparams.args.batch_size * max(1, self.trainer.gpus)
+        tb_size = self.batch_size * max(1, self.trainer.gpus)
         ab_size = self.trainer.accumulate_grad_batches * float(self.trainer.max_epochs)
         self.total_steps = (len(df_train) // tb_size) // ab_size
         print(f"total step: {self.total_steps}")
       if stage == "test" or stage is None:
         # test dataset assign
-        test_path = "./datasets/" + self.hparams.args.dataset_name + "_test.csv"
+        test_path = "./datasets/" + self.dataset_name + "_test.csv"
         df_test = pd.read_csv(test_path)
-        self.ds_test = SequenceDataset(df_test, self.hparams.args.dataset_name, self.tokenizer, max_seq_length=self.hparams.args.max_seq_length)
+        self.ds_test = SequenceDataset(df_test, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
 
     def train_dataloader(self):
-        return DataLoader(self.ds_train, batch_size=self.hparams.args.batch_size, num_workers=self.hparams.args.num_workers)
+        return DataLoader(self.ds_train, batch_size=self.batch_size, num_workers=self.num_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.ds_val, batch_size=self.hparams.args.batch_size, num_workers=self.hparams.args.num_workers)
+        return DataLoader(self.ds_val, batch_size=self.batch_size, num_workers=self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(self.ds_test, batch_size=self.hparams.args.batch_size, num_workers=self.hparams.args.num_workers)
+        return DataLoader(self.ds_test, batch_size=self.batch_size, num_workers=self.num_workers)
