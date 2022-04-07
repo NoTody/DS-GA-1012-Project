@@ -31,6 +31,11 @@
 *.out
 *.app
 
+<<<<<<< HEAD
 # 
 /.ipynb_checkpoints
 /__pycache__
+=======
+.ipynb_checkpoints/
+__pycache__/
+>>>>>>> a27d0324da0e5aadddbb355404b0d41509de99ac
