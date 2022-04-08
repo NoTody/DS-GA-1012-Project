@@ -32,7 +32,6 @@ def test_model(args, load_path):
     checkpoint = torch.load(load_path)
     loaded_model.eval()
     trainer.test(loaded_model)
-    
 
 if __name__ == '__main__':
     # suppress warning
@@ -76,4 +75,3 @@ if __name__ == '__main__':
         model.load_state_dict(checkpoint['state_dict'])
         model.eval()
         trainer.test(model)
-
