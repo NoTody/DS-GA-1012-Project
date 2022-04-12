@@ -31,11 +31,7 @@
 *.out
 *.app
 
-<<<<<<< HEAD
-# 
-/.ipynb_checkpoints
-/__pycache__
-=======
+# ignore auto generated directories and files
 .ipynb_checkpoints/
 __pycache__/
->>>>>>> a27d0324da0e5aadddbb355404b0d41509de99ac
+.DS_Store
