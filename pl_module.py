@@ -1,6 +1,7 @@
 import os
 import sys
 import torch
+import logging
 from pytorch_lightning import Trainer, LightningModule, seed_everything
 from pytorch_lightning.callbacks import TQDMProgressBar, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -78,8 +79,8 @@ class LitTransformer(LightningModule):
         b_input_ids = forward_outputs['input_ids']
         # Tensorboard logging for model graph and loss
         #self.logger.experiment.add_graph(self.model, input_to_model=b_input_ids, verbose=False, use_strict_trace=True)
-        self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, self.global_step)
-        #self.log("train_loss", train_loss, on_epoch=False, on_step=True, prog_bar=True)
+        #self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, self.global_step)
+        self.log("train_loss", train_loss, on_epoch=False, on_step=True, prog_bar=True)
         return train_loss
 
     def validation_step(self, batch, batch_idx):
@@ -90,8 +91,8 @@ class LitTransformer(LightningModule):
         self.accuracy(preds, labels)
         self.f1(preds, labels)
         # Calling self.log will surface up scalars for you in TensorBoard
-        self.logger.experiment.add_scalars('loss', {'val_loss': val_loss}, self.global_step)
-        #self.log("val_loss", val_loss, on_epoch=True, on_step=False, prog_bar=True)
+        #self.logger.experiment.add_scalars('loss', {'val_loss': val_loss}, self.global_step)
+        self.log("val_loss", val_loss, on_step=False, on_epoch=True, prog_bar=True)
         # self.log("val_acc", self.accuracy, on_epoch=True, on_step=False, prog_bar=True)
         # self.log("val_f1", self.f1, on_epoch=True, on_step=False, prog_bar=True)
         self.log("val_acc", self.accuracy, on_step=False, on_epoch=True, prog_bar=True)
@@ -153,12 +154,14 @@ class LitTransformer(LightningModule):
       # dataset setup
       if stage == "fit" or stage is None:
         # train dataset assign
-        train_path = "./datasets/" + self.dataset_name + "_train.csv"
+        train_path = "../train_data/" + self.dataset_name + "_train.csv"
         df_train = pd.read_csv(train_path)
+        logging.info("Preparing training data...")
         self.ds_train = SequenceDataset(df_train, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
         # val dataset assign
-        val_path = "./datasets/" + self.dataset_name + "_val.csv"
+        val_path = "../train_data/" + self.dataset_name + "_val.csv"
         df_val = pd.read_csv(val_path)
+        logging.info("Preparing validation data...")
         self.ds_val = SequenceDataset(df_val, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
         # Calculate total steps
         tb_size = self.batch_size * max(1, self.trainer.gpus)
@@ -167,8 +170,9 @@ class LitTransformer(LightningModule):
         print(f"total step: {self.total_steps}")
       if stage == "test" or stage is None:
         # test dataset assign
-        test_path = "./datasets/" + self.dataset_name + "_test.csv"
+        test_path = "../train_data/" + self.dataset_name + "_test.csv"
         df_test = pd.read_csv(test_path)
+        logging.info("Preparing test data...")
         self.ds_test = SequenceDataset(df_test, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
 
     def train_dataloader(self):
