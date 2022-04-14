@@ -1,6 +1,7 @@
 import os
 import sys
 import torch
+from tqdm import tqdm
 from torch.utils.data import Dataset
 import pandas as pd
 import numpy as np
@@ -18,8 +19,7 @@ def encode_data(dataset, dataset_name, tokenizer, max_seq_length=128):
     
     input_ids = torch.empty((len(dataset), max_seq_length), dtype=torch.long)
     attention_mask = torch.empty((len(dataset), max_seq_length), dtype=torch.long)
-    print("Encoding data ...")
-    for i in range(len(dataset)):
+    for i in tqdm(range(len(dataset))):
         if "snli" in dataset_name:
             sequence = tokenizer.encode_plus(str(premise[i]), str(hypothesis[i]), return_tensors="pt",
                                              max_length=max_seq_length, padding="max_length", truncation=True)
