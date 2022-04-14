@@ -32,7 +32,6 @@ def test_model(args, load_path):
     checkpoint = torch.load(load_path)
     loaded_model.eval()
     trainer.test(loaded_model)
-    
 
 if __name__ == '__main__':
     # suppress warning
@@ -61,8 +60,8 @@ if __name__ == '__main__':
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=args.tb_save_dir) 
     # Initialize the trainer
     trainer = Trainer(precision=16, gpus=args.num_devices, accelerator="gpu", num_nodes=args.num_nodes,
-                    DDPStrategy(find_unused_parameters=False), max_epochs=args.max_epochs, logger=tb_logger, 
-                    callbacks=[checkpoint_callback, early_stop_callback, bar]
+                    strategy=DDPStrategy(find_unused_parameters=False), max_epochs=args.max_epochs, 
+                    logger=tb_logger, callbacks=[checkpoint_callback, early_stop_callback, bar]
                     )
     
     if args.mode == "train":

@@ -78,8 +78,8 @@ class LitTransformer(LightningModule):
         b_input_ids = forward_outputs['input_ids']
         # Tensorboard logging for model graph and loss
         #self.logger.experiment.add_graph(self.model, input_to_model=b_input_ids, verbose=False, use_strict_trace=True)
-        self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, self.global_step)
-        #self.log("train_loss", train_loss, on_epoch=False, on_step=True, prog_bar=True)
+        #self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, self.global_step)
+        self.log("train_loss", train_loss, on_epoch=False, on_step=True, prog_bar=True)
         return train_loss
 
     def validation_step(self, batch, batch_idx):
@@ -90,8 +90,8 @@ class LitTransformer(LightningModule):
         self.accuracy(preds, labels)
         self.f1(preds, labels)
         # Calling self.log will surface up scalars for you in TensorBoard
-        self.logger.experiment.add_scalars('loss', {'val_loss': val_loss}, self.global_step)
-        #self.log("val_loss", val_loss, on_epoch=True, on_step=False, prog_bar=True)
+        #self.logger.experiment.add_scalars('loss', {'val_loss': val_loss}, self.global_step)
+        self.log("val_loss", val_loss, on_step=False, on_epoch=True, prog_bar=True)
         # self.log("val_acc", self.accuracy, on_epoch=True, on_step=False, prog_bar=True)
         # self.log("val_f1", self.f1, on_epoch=True, on_step=False, prog_bar=True)
         self.log("val_acc", self.accuracy, on_step=False, on_epoch=True, prog_bar=True)
