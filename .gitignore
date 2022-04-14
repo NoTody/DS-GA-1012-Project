@@ -38,3 +38,4 @@
 .ipynb_checkpoints/
 __pycache__/
 .DS_Store
+datasets/imdb_train.csv
