@@ -154,12 +154,12 @@ class LitTransformer(LightningModule):
       # dataset setup
       if stage == "fit" or stage is None:
         # train dataset assign
-        train_path = "../train_data/" + self.dataset_name + "_train.csv"
+        train_path = "./datasets/" + self.dataset_name + "_train.csv"
         df_train = pd.read_csv(train_path)
         logging.info("Preparing training data...")
         self.ds_train = SequenceDataset(df_train, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
         # val dataset assign
-        val_path = "../train_data/" + self.dataset_name + "_val.csv"
+        val_path = "./datasets/" + self.dataset_name + "_val.csv"
         df_val = pd.read_csv(val_path)
         logging.info("Preparing validation data...")
         self.ds_val = SequenceDataset(df_val, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
@@ -170,7 +170,7 @@ class LitTransformer(LightningModule):
         print(f"total step: {self.total_steps}")
       if stage == "test" or stage is None:
         # test dataset assign
-        test_path = "../train_data/" + self.dataset_name + "_test.csv"
+        test_path = "./datasets/" + self.dataset_name + "_test.csv"
         df_test = pd.read_csv(test_path)
         logging.info("Preparing test data...")
         self.ds_test = SequenceDataset(df_test, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
