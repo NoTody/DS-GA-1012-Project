@@ -1,5 +1,5 @@
-import pl_module
-from pl_module import *
+import baseline_pl
+from baseline_pl import *
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.strategies.ddp import DDPStrategy
 import argparse
