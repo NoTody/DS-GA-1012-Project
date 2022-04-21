@@ -194,9 +194,9 @@ class CRTransformer(LightningModule):
         train_path_str_adv = "./datasets/" + self.hparams.dataset_name_str_adv + "_train.csv"
         train_path_weak_aug = "./datasets/" + self.hparams.dataset_name_weak_aug + "_train.csv"
         # read/generate three ways dataset
-        df_train_ori = pd.read_csv(train_path)
-        df_train_str_adv = pd.read_csv(train_path)
-        df_train_weak_aug = pd.read_csv(train_path)
+        df_train_ori = pd.read_csv(train_path_ori)
+        df_train_weak_aug = pd.read_csv(train_path_weak_aug)
+        df_train_str_adv = pd.read_csv(train_path_str_adv)
         
         self.ds_train_ori = SequenceDataset(df_train_ori, self.dataset_name, self.tokenizer,
                                             max_seq_length=self.max_seq_length)
@@ -206,9 +206,18 @@ class CRTransformer(LightningModule):
                                                 max_seq_length=self.max_seq_length)
         
         # val dataset assign
-        val_path = "./datasets/" + self.dataset_name + "_val.csv"
-        df_val = pd.read_csv(val_path)
-        self.ds_val = SequenceDataset(df_val, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
+        val_path_ori = "./datasets/" + self.hparams.dataset_name_ori + "_val.csv"
+        val_path_str_adv = "./datasets/" + self.hparams.dataset_name_str_adv + "_val.csv"
+        val_path_weak_aug = "./datasets/" + self.hparams.dataset_name_weak_aug + "_val.csv"
+        df_val_ori = pd.read_csv(val_path_ori)
+        df_val_weak_aug = pd.read_csv(val_path_weak_aug)
+        df_val_str_adv = pd.read_csv(val_path_str_adv)
+        self.ds_val_ori = SequenceDataset(df_val_ori, self.dataset_name, self.tokenizer, 
+                                          max_seq_length=self.max_seq_length)
+        self.ds_val_weak_aug = SequenceDataset(df_val_weak_aug, self.dataset_name, self.tokenizer, 
+                                               max_seq_length=self.max_seq_length)
+        self.ds_val_str_adv = SequenceDataset(df_val_str_adv, self.dataset_name, self.tokenizer, 
+                                              max_seq_length=self.max_seq_length)
         # Calculate total steps
         tb_size = self.batch_size * max(1, self.trainer.gpus)
         ab_size = self.trainer.accumulate_grad_batches * float(self.trainer.max_epochs)
@@ -217,9 +226,9 @@ class CRTransformer(LightningModule):
         
     if stage == "test" or stage is None:
         # test dataset assign
-        test_path = "./datasets/" + self.dataset_name + "_test.csv"
+        test_path = "./datasets/" + self.testset_name + "_test.csv"
         df_test = pd.read_csv(test_path)
-        self.ds_test = SequenceDataset(df_test, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
+        self.ds_test = SequenceDataset(df_test, self.testset_name, self.tokenizer, max_seq_length=self.max_seq_length)
 
     def train_dataloader(self):
         self.ds_train_ori = DataLoader(self.ds_train_ori, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
@@ -244,7 +253,10 @@ class CRTransformer(LightningModule):
         # config parameters
         parser.add_argument("--accumulate_grad_batches", type=int, default=1)
         parser.add_argument("--model_name", type=str, default="bert-base-uncased")
-        parser.add_argument("--dataset_name", type=str, default="agnews")
+        parser.add_argument("--dataset_name_ori", type=str, default="agnews")
+        parser.add_argument("--dataset_name_str_adv", type=str, default="agnews")
+        parser.add_argument("--dataset_name_weak_aug", type=str, default="agnews")
+        parser.add_argument("--testset_name", type=str, default="agnews")
         parser.add_argument("--num_workers", type=int, default=10)
         parser.add_argument("--max_epochs", type=int, default=5)
         parser.add_argument("--batch_size", type=int, default=32)
