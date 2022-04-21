@@ -6,7 +6,7 @@ def main(hparams):
     # ------------------------
     # 1 INIT LIGHTNING MODEL
     # ------------------------
-    model = LitTransformer(hparams)
+    model = CRTransformer(hparams)
     
     # ------------------------
     # 2 INIT CALLBACKS
@@ -25,7 +25,7 @@ def main(hparams):
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=hparams.tb_save_dir) 
 
     # ------------------------
-    # 2 INIT TRAINER
+    # 3 INIT TRAINER
     # ------------------------
     trainer = Trainer(precision=hparams.precision, gpus=hparams.gpus, accelerator="gpu", num_nodes=hparams.num_nodes,
                 strategy=DDPStrategy(find_unused_parameters=False), max_epochs=hparams.max_epochs, 
@@ -33,7 +33,7 @@ def main(hparams):
                 )
 
     # ------------------------
-    # 3 START TRAINING
+    # 4 START TRAINING
     # ------------------------
     trainer.fit(model)
 
