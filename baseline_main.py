@@ -1,5 +1,5 @@
-import baseline_pl
-from baseline_pl import *
+import pl_module
+from pl_module import *
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.strategies.ddp import DDPStrategy
 import argparse
@@ -48,20 +48,20 @@ if __name__ == '__main__':
 
     # Define Callbacks
     bar = TQDMProgressBar(refresh_rate=20, process_position=0)
-    early_stop_callback = EarlyStopping(monitor="val_f1", min_delta=0.00, patience=2, verbose=False, mode="max")
+    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=2, verbose=False, mode="min")
     checkpoint_callback = ModelCheckpoint(
         save_top_k=1,
         verbose=True,
-        monitor='val_f1',
-        mode='max',
+        monitor='val_loss',
+        mode='min',
         save_weights_only=False
     )
     # Define Logger
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=args.tb_save_dir) 
     # Initialize the trainer
     trainer = Trainer(precision=16, gpus=args.num_devices, accelerator="gpu", num_nodes=args.num_nodes,
-                    strategy=DDPStrategy(find_unused_parameters=False), max_epochs=args.max_epochs, 
-                    logger=tb_logger, callbacks=[checkpoint_callback, early_stop_callback, bar]
+                    strategy=DDPStrategy(find_unused_parameters=False), max_epochs=args.max_epochs,
+                    log_every_n_steps=20, logger=tb_logger, callbacks=[checkpoint_callback, early_stop_callback, bar]
                     )
     
     if args.mode == "train":
