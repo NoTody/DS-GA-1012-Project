@@ -206,9 +206,9 @@ class CRTransformer(LightningModule):
       # dataset setup
       if stage == "fit" or stage is None:
         # train dataset assign
-        train_path_ori = "../traindata/" + self.hparams.dataset_name_ori + "_train.csv"
-        train_path_str_adv = "../traindata/" + self.hparams.dataset_name_str_adv + "_train.csv"
-        train_path_weak_aug = "../traindata/" + self.hparams.dataset_name_weak_aug + "_train.csv"
+        train_path_ori = "./datasets/" + self.hparams.dataset_name_ori + "_train.csv"
+        train_path_str_adv = "./datasets/" + self.hparams.dataset_name_str_adv + "_train.csv"
+        train_path_weak_aug = "./datasets/" + self.hparams.dataset_name_weak_aug + "_train.csv"
         # read/generate three ways dataset
         df_train_ori = pd.read_csv(train_path_ori)
         df_train_weak_aug = pd.read_csv(train_path_weak_aug)
@@ -223,9 +223,9 @@ class CRTransformer(LightningModule):
                                                 max_seq_length=self.hparams.max_seq_length)
         
         # val dataset assign
-        val_path_ori = "../traindata/" + self.hparams.dataset_name_ori + "_val.csv"
-        val_path_str_adv = "../traindata/" + self.hparams.dataset_name_str_adv + "_val.csv"
-        val_path_weak_aug = "../traindata/" + self.hparams.dataset_name_weak_aug + "_val.csv"
+        val_path_ori = "./datasets/" + self.hparams.dataset_name_ori + "_val.csv"
+        val_path_str_adv = "./datasets/" + self.hparams.dataset_name_str_adv + "_val.csv"
+        val_path_weak_aug = "./datasets/" + self.hparams.dataset_name_weak_aug + "_val.csv"
         
         df_val_ori = pd.read_csv(val_path_ori)
         df_val_weak_aug = pd.read_csv(val_path_weak_aug)
@@ -246,7 +246,7 @@ class CRTransformer(LightningModule):
         
       if stage == "test" or stage is None:
         # test dataset assign
-        test_path = "../traindata/" + self.hparams.testset_name + "_test.csv"
+        test_path = "./datasets/" + self.hparams.testset_name + "_test.csv"
         df_test = pd.read_csv(test_path)
         
         print("Testset Loading ...")
