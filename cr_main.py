@@ -19,12 +19,12 @@ def main(hparams):
     # 2 INIT CALLBACKS
     # ------------------------
     bar = TQDMProgressBar(refresh_rate=20, process_position=0)
-    early_stop_callback = EarlyStopping(monitor="val_acc", min_delta=0.00, patience=2, verbose=False, mode="max")
+    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=3, verbose=False, mode="min")
     checkpoint_callback = ModelCheckpoint(
         save_top_k=1,
         verbose=True,
-        monitor='val_acc',
-        mode='max',
+        monitor='val_loss',
+        mode='min',
         save_weights_only=False
     )
     

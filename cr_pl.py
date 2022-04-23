@@ -32,6 +32,11 @@ class CRTransformer(LightningModule):
 
         # Define metrics
         self.accuracy = Accuracy()
+        self.accuracy_ori = Accuracy()
+        self.accuracy_ssmba = Accuracy()
+        self.accuracy_eda = Accuracy()
+        self.accuracy_tf = Accuracy()
+
         self.f1 = F1Score()
     
     #############################
@@ -139,7 +144,57 @@ class CRTransformer(LightningModule):
         if stage:
             self.log(f"{stage}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
             self.log(f"{stage}_acc", self.accuracy, on_step=False, on_epoch=True, prog_bar=True)
-             
+        
+    def _test(self, batch, stage=None):
+        input_ids, attn_mask, labels = batch['ori']['input_ids'], batch['ori']['attention_mask'], batch['ori']['labels']
+        #print(f"input_ids: {input_ids.shape}")
+        outputs_ori = self.student(input_ids, attn_mask)
+        logits = outputs_ori.logits
+        hidden_states = outputs_ori.hidden_states
+        criterion = nn.CrossEntropyLoss()
+        loss_ori = criterion(logits, labels)
+        preds_ori = torch.argmax(logits, dim=1)
+        self.accuracy_ori(preds_ori, labels)
+        if stage:
+            self.log(f"{stage}_loss_ori", loss_ori, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"{stage}_acc_ori", self.accuracy_ori, on_step=False, on_epoch=True, prog_bar=True)
+ 
+        input_ids, attn_mask, labels = batch['ssmba']['input_ids'], batch['ssmba']['attention_mask'], batch['ssmba']['labels']
+        outputs_ssmba = self.student(input_ids, attn_mask)
+        logits = outputs_ssmba.logits
+        hidden_states = outputs_ssmba.hidden_states
+        criterion = nn.CrossEntropyLoss()
+        loss_ssmba = criterion(logits, labels)
+        preds_ssmba = torch.argmax(logits, dim=1)
+        self.accuracy_ssmba(preds_ssmba, labels)
+        if stage:
+            self.log(f"{stage}_loss_ssmba", loss_ssmba, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"{stage}_acc_ssmba", self.accuracy_ssmba, on_step=False, on_epoch=True, prog_bar=True)
+        
+        input_ids, attn_mask, labels = batch['eda']['input_ids'], batch['eda']['attention_mask'], batch['eda']['labels']
+        outputs_eda = self.student(input_ids, attn_mask)
+        logits = outputs_eda.logits
+        hidden_states = outputs_eda.hidden_states
+        criterion = nn.CrossEntropyLoss()
+        loss_eda = criterion(logits, labels)
+        preds_eda = torch.argmax(logits, dim=1)
+        self.accuracy_eda(preds_eda, labels)
+        if stage:
+            self.log(f"{stage}_loss_eda", loss_eda, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"{stage}_acc_eda", self.accuracy_eda, on_step=False, on_epoch=True, prog_bar=True)
+        
+        input_ids, attn_mask, labels = batch['tf']['input_ids'], batch['tf']['attention_mask'], batch['tf']['labels']
+        outputs_tf = self.student(input_ids, attn_mask)
+        logits = outputs_tf.logits
+        hidden_states = outputs_tf.hidden_states
+        criterion = nn.CrossEntropyLoss()
+        loss_tf = criterion(logits, labels)
+        preds_tf = torch.argmax(logits, dim=1)
+        self.accuracy_tf(preds_tf, labels)
+        if stage:
+            self.log(f"{stage}_loss_tf", loss_tf, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"{stage}_acc_tf", self.accuracy_tf, on_step=False, on_epoch=True, prog_bar=True)
+
     def training_step(self, batch, batch_idx):
         forward_outputs = self.forward_one_epoch(batch, batch_idx)
         train_loss = forward_outputs['loss']
@@ -166,7 +221,8 @@ class CRTransformer(LightningModule):
         self.evaluate(batch, "val")
 
     def test_step(self, batch, batch_idx):
-        self.evaluate(batch, "test")
+        #self.evaluate(batch, "test")
+        self._test(batch, "test")
         
     def configure_optimizers(self):
         # set no decay for bias and normalziation weights
@@ -246,22 +302,32 @@ class CRTransformer(LightningModule):
         
       if stage == "test" or stage is None:
         # test dataset assign
-        test_path = "../traindata/" + self.hparams.testset_name + "_test.csv"
-        df_test = pd.read_csv(test_path)
-        
+        test_path_ori = "../traindata/" + self.hparams.testset_name_ori + "_test.csv"
+        test_path_ssmba = "../traindata/" + self.hparams.testset_name_ssmba + "_test.csv"
+        test_path_eda = "../traindata/" + self.hparams.testset_name_eda + "_test.csv"
+        test_path_tf = "../traindata/" + self.hparams.testset_name_tf + "_test.csv"        
+
+        df_test_ori = pd.read_csv(test_path_ori)
+        df_test_ssmba = pd.read_csv(test_path_ssmba)
+        df_test_eda = pd.read_csv(test_path_eda)
+        df_test_tf = pd.read_csv(test_path_tf)
+         
         print("Testset Loading ...")
-        self.ds_test = SequenceDataset(df_test, self.hparams.testset_name, self.tokenizer, max_seq_length=self.hparams.max_seq_length)
+        self.ds_test_ori = SequenceDataset(df_test_ori, self.hparams.testset_name_ori, self.tokenizer, max_seq_length=self.hparams.max_seq_length)
+        self.ds_test_ssmba = SequenceDataset(df_test_ssmba, self.hparams.testset_name_ssmba, self.tokenizer, max_seq_length=self.hparams.max_seq_length)
+        self.ds_test_eda = SequenceDataset(df_test_eda, self.hparams.testset_name_eda, self.tokenizer, max_seq_length=self.hparams.max_seq_length)
+        self.ds_test_tf = SequenceDataset(df_test_tf, self.hparams.testset_name_tf, self.tokenizer, max_seq_length=self.hparams.max_seq_length)
 
     def train_dataloader(self):
         self.ds_train_ori = DataLoader(self.ds_train_ori, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
-        ds_train_weak_aug = DataLoader(self.ds_train_weak_aug, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
-        ds_train_str_adv = DataLoader(self.ds_train_str_adv, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        dl_train_weak_aug = DataLoader(self.ds_train_weak_aug, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        dl_train_str_adv = DataLoader(self.ds_train_str_adv, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
        
         # momentum parameter is increased to 1. during training with a cosine schedule
         self.momentum_schedule = cosine_scheduler(self.hparams.momentum_teacher, 1, self.hparams.max_epochs, 
                                                 len(self.ds_train_ori))
        
-        loaders = {"ori": self.ds_train_ori, "weak_aug": ds_train_weak_aug, "str_adv": ds_train_str_adv} 
+        loaders = {"ori": self.ds_train_ori, "weak_aug": dl_train_weak_aug, "str_adv": dl_train_str_adv} 
         combined_loader = CombinedLoader(loaders, mode='min_size')
         return combined_loader
     
@@ -269,8 +335,15 @@ class CRTransformer(LightningModule):
         return DataLoader(self.ds_val_ori, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(self.ds_test, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
-    
+        dl_test_ori = DataLoader(self.ds_test_ori, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        dl_test_ssmba = DataLoader(self.ds_test_ssmba, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        dl_test_eda = DataLoader(self.ds_test_eda, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        dl_test_tf = DataLoader(self.ds_test_tf, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        
+        loaders = {"ori": dl_test_ori, "ssmba": dl_test_ssmba, "eda": dl_test_eda, "tf": dl_test_tf}
+        combined_loader = CombinedLoader(loaders, mode='min_size')
+        return combined_loader   
+ 
     @staticmethod
     def add_model_specific_args(parent_parser, root_dir):
         parser = argparse.ArgumentParser(parents=[parent_parser])
@@ -278,9 +351,12 @@ class CRTransformer(LightningModule):
         parser.add_argument("--accumulate_grad_batches", type=int, default=1)
         parser.add_argument("--model_name", type=str, default="bert-base-uncased")
         parser.add_argument("--dataset_name_ori", type=str, default="agnews")
-        parser.add_argument("--dataset_name_str_adv", type=str, default="agnews")
-        parser.add_argument("--dataset_name_weak_aug", type=str, default="agnews")
-        parser.add_argument("--testset_name", type=str, default="agnews")
+        parser.add_argument("--dataset_name_str_adv", type=str, default="agnews_ssmba")
+        parser.add_argument("--dataset_name_weak_aug", type=str, default="agnews_eda")
+        parser.add_argument("--testset_name_ori", type=str, default="agnews")
+        parser.add_argument("--testset_name_ssmba", type=str, default="agnews_ssmba")
+        parser.add_argument("--testset_name_eda", type=str, default="agnews_eda")
+        parser.add_argument("--testset_name_tf", type=str, default="agnews_bert_tf")
         parser.add_argument("--num_workers", type=int, default=10)
         parser.add_argument("--max_epochs", type=int, default=5)
         parser.add_argument("--batch_size", type=int, default=32)

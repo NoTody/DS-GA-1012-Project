@@ -1,0 +1,13 @@
+#BSUB -J "imdb"
+#BSUB -R "rusage[mem=4]"
+#BSUB -q gpu32
+#BSUB -n 10
+#BSUB -gpu "num=2:mode=shared:j_exclusive=yes"
+#BSUB -e imdb_ssmba_synonym.err
+#BSUB -o imdb_ssmba_synonym.out
+
+. /gpfs/share/skynet/apps/anaconda3/etc/profile.d/conda.sh
+conda activate opence_env_1.5.1
+
+python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 2 --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 32 --max_seq_length 256 --mode "train" --lr 2e-5 --num_labels 4 --scheduler_name "cosine" --dataset_name_ori "agnews" --dataset_name_str_adv "agnews_ssmba" --dataset_name_weak_aug "agnews_synonym" --tb_save_dir "./" --loss_func "l1_smooth" --top_k_layers 5
+n ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 2 --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 32 --max_seq_length 256 --mode "train" --lr 2e-5 --num_labels 2 --scheduler_name "cosine" --dataset_name_ori "imdb" --dataset_name_str_adv "imdb_ssmba" --dataset_name_weak_aug "imdb_synonym" --tb_save_dir "./" --loss_func "l1_smooth" --top_k_layers 4
