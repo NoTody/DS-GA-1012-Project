@@ -1,3 +1,10 @@
+import cr_pl
+from cr_pl import *
+from pytorch_lightning import loggers as pl_loggers
+from pytorch_lightning.strategies.ddp import DDPStrategy
+import argparse
+from argparse import ArgumentParser
+
 def main(hparams):
     """
     Main training routine specific for this project
@@ -12,12 +19,12 @@ def main(hparams):
     # 2 INIT CALLBACKS
     # ------------------------
     bar = TQDMProgressBar(refresh_rate=20, process_position=0)
-    early_stop_callback = EarlyStopping(monitor="loss", min_delta=0.00, patience=2, verbose=False, mode="min")
+    early_stop_callback = EarlyStopping(monitor="val_acc", min_delta=0.00, patience=2, verbose=False, mode="max")
     checkpoint_callback = ModelCheckpoint(
         save_top_k=1,
         verbose=True,
-        monitor='loss',
-        mode='min',
+        monitor='val_acc',
+        mode='max',
         save_weights_only=False
     )
     
@@ -27,7 +34,7 @@ def main(hparams):
     # ------------------------
     # 3 INIT TRAINER
     # ------------------------
-    trainer = Trainer(precision=hparams.precision, gpus=hparams.gpus, accelerator="gpu", num_nodes=hparams.num_nodes,
+    trainer = Trainer(precision=hparams.precision, devices=hparams.gpus, accelerator="gpu", num_nodes=hparams.num_nodes,
                 strategy=DDPStrategy(find_unused_parameters=False), max_epochs=hparams.max_epochs, 
                 logger=tb_logger, callbacks=[checkpoint_callback, early_stop_callback, bar]
                 )
@@ -35,9 +42,20 @@ def main(hparams):
     # ------------------------
     # 4 START TRAINING
     # ------------------------
-    trainer.fit(model)
+    if hparams.mode == "train":
+        print("Train mode")
+        trainer.fit(model)
+    elif hparams.mode == "test":
+        print("Test mode")
+        # Test the model from loaded checkpoint
+        checkpoint = torch.load(hparams.load_path)
+        model.load_state_dict(checkpoint['state_dict'])
+        model.eval()
+        trainer.test(model)
 
 if __name__ == '__main__':
+    # suppress warning
+    os.environ["TOKENIZERS_PARALLELISM"] = "true"
     # ------------------------
     # TRAINING ARGUMENTS
     # ------------------------
@@ -72,7 +90,7 @@ if __name__ == '__main__':
                               )
 
     # each LightningModule defines arguments relevant to it
-    parser = CRTransformer.add_model_specific_args(parent_parser)
+    parser = CRTransformer.add_model_specific_args(parent_parser, root_dir)
     hyperparams = parser.parse_args()
   
     # ---------------------
