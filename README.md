@@ -27,7 +27,7 @@ python ./baseline_main.py --num_nodes 1 --num_devices 1 --model_name "bert-base-
 ## train
 ---------------------
 ```
-python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 2 --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 32 --max_seq_length 256 --mode "train" --lr 2e-5 --num_labels 4 --scheduler_name "cosine" --dataset_name_ori "agnews" --dataset_name_str_adv "agnews_ssmba" --dataset_name_weak_aug "agnews_synonym" --tb_save_dir "./" --loss_func "l1_smooth" --top_k_layers 5
+python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 1 --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 32 --max_seq_length 256 --mode "train" --lr 2e-5 --num_labels 4 --scheduler_name "cosine" --dataset_name_ori "agnews" --dataset_name_str_adv "agnews_ssmba" --dataset_name_weak_aug "agnews_synonym" --tb_save_dir "./" --loss_func "l1_smooth" --top_k_layers 5
 ```
 
 ## test
