@@ -35,5 +35,8 @@
 .ipynb_checkpoints/
 __pycache__/
 .DS_Store
+**/.DS_Store
 datasets/imdb_train.csv
 lightning_logs/
+*.err
+*.out

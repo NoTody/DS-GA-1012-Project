@@ -25,6 +25,11 @@ def get_args_parser():
     parser.add_argument("--num_labels", type=int, default=4)
     parser.add_argument("--weight_decay", type=float, default=0.0)
     parser.add_argument("--scheduler_name", type=str, default="cosine")
+    # dataset
+    parser.add_argument("--testset_name_ori", type=str, default="agnews")
+    parser.add_argument("--testset_name_ssmba", type=str, default="agnews_ssmba")
+    parser.add_argument("--testset_name_eda", type=str, default="agnews_eda")
+    parser.add_argument("--testset_name_tf", type=str, default="agnews_bert_tf")
     return parser
 
 def test_model(args, load_path):

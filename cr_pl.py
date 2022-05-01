@@ -19,6 +19,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, Auto
 from transformers import get_linear_schedule_with_warmup, get_cosine_schedule_with_warmup
 from data_utils import *
 from model_utils import *
+from loss_utils import _jensen_shannon_div, _kl_div
 
 class CRTransformer(LightningModule):
     def __init__(self, hparams):
@@ -31,7 +32,8 @@ class CRTransformer(LightningModule):
         self.__build_model()
 
         # Define metrics
-        self.accuracy = Accuracy()
+        self.accuracy_train = Accuracy()
+        self.accuracy_val = Accuracy()
         self.accuracy_ori = Accuracy()
         self.accuracy_ssmba = Accuracy()
         self.accuracy_eda = Accuracy()
@@ -89,10 +91,11 @@ class CRTransformer(LightningModule):
         input_ids, attn_mask, labels = batch['weak_aug']['input_ids'], batch['weak_aug']['attention_mask'], batch['weak_aug']['labels']
         outputs_weak_aug = self.student(input_ids, attn_mask)
         
-        hidden_states_weak_aug = outputs_weak_aug.hidden_states
-        hidden_states_str_adv = outputs_str_adv.hidden_states
-        
         if self.hparams.loss_func == 'l1_smooth': 
+            # get hidden states
+            hidden_states_weak_aug = outputs_weak_aug.hidden_states
+            hidden_states_str_adv = outputs_str_adv.hidden_states
+ 
             criterion = nn.CrossEntropyLoss()
             # calcualate self-supervised loss from cls embeddings
             for i in range(self.hparams.top_k_layers - 1):
@@ -115,7 +118,7 @@ class CRTransformer(LightningModule):
             y_adv = F.layer_norm(y_adv, y_adv.shape[1:])
             #print(f"y_aug: {y_aug.shape}")
             #print(f"y_aug: {y_adv.shape}")
-            # calculate smooth l1 loss
+            # calculate scaled smooth l1 loss
             sz = y_aug.size(-1)
             loss_scale = 1 / math.sqrt(sz)
             selfsup_loss = loss_scale * F.smooth_l1_loss(y_aug.float(), y_adv.float(), reduction="none", beta=self.hparams.loss_beta).sum(dim=-1).sum()
@@ -124,7 +127,27 @@ class CRTransformer(LightningModule):
             logits = outputs_ori.logits
             sup_loss = criterion(logits, labels)
             # calculate final loss
-            loss = (1 - self.hparams.lamb) * selfsup_loss + self.hparams.lamb * sup_loss
+            loss = selfsup_loss + self.hparams.lamb * sup_loss
+            # get predict
+            preds = torch.argmax(logits, dim=1)
+        elif self.hparams.loss_func == 'JS' or self.hparams.loss_func == 'KL':
+            # get all logits
+            logits_ori = outputs_ori.logits
+            logits_str_adv = outputs_str_adv.logits
+            logits_weak_aug = outputs_weak_aug.logits
+            # calculate consistency regularization 
+            if self.hparams.loss_func == 'JS':
+                selfsup_loss = _jensen_shannon_div(logits_str_adv, logits_weak_aug, self.hparams.T)
+                selfsup_loss *= self.hparams.con_coeff
+            elif self.hparams.loss_func == 'KL':
+                selfsup_loss = _kl_div(logits_str_adv, logits_weak_aug, self.hparams.T)
+                selfsup_loss *= self.hparams.con_coeff
+            # calculate supervised loss from true label
+            criterion = nn.CrossEntropyLoss()
+            logits = outputs_ori.logits
+            sup_loss = criterion(logits, labels)
+            # calculate final loss
+            loss = selfsup_loss + self.hparams.lamb * sup_loss
             # get predict
             preds = torch.argmax(logits, dim=1)
         else:
@@ -140,12 +163,13 @@ class CRTransformer(LightningModule):
         criterion = nn.CrossEntropyLoss()
         loss = criterion(logits, labels)
         preds = torch.argmax(logits, dim=1)
-        self.accuracy(preds, labels)
+        self.accuracy_val(preds, labels)
         if stage:
             self.log(f"{stage}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-            self.log(f"{stage}_acc", self.accuracy, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"{stage}_acc", self.accuracy_val, on_step=False, on_epoch=True, prog_bar=True)
         
     def _test(self, batch, stage=None):
+        # ori test
         input_ids, attn_mask, labels = batch['ori']['input_ids'], batch['ori']['attention_mask'], batch['ori']['labels']
         #print(f"input_ids: {input_ids.shape}")
         outputs_ori = self.student(input_ids, attn_mask)
@@ -158,7 +182,8 @@ class CRTransformer(LightningModule):
         if stage:
             self.log(f"{stage}_loss_ori", loss_ori, on_step=False, on_epoch=True, prog_bar=True)
             self.log(f"{stage}_acc_ori", self.accuracy_ori, on_step=False, on_epoch=True, prog_bar=True)
- 
+        
+        # ssmba test
         input_ids, attn_mask, labels = batch['ssmba']['input_ids'], batch['ssmba']['attention_mask'], batch['ssmba']['labels']
         outputs_ssmba = self.student(input_ids, attn_mask)
         logits = outputs_ssmba.logits
@@ -170,7 +195,8 @@ class CRTransformer(LightningModule):
         if stage:
             self.log(f"{stage}_loss_ssmba", loss_ssmba, on_step=False, on_epoch=True, prog_bar=True)
             self.log(f"{stage}_acc_ssmba", self.accuracy_ssmba, on_step=False, on_epoch=True, prog_bar=True)
-        
+
+        # eda test         
         input_ids, attn_mask, labels = batch['eda']['input_ids'], batch['eda']['attention_mask'], batch['eda']['labels']
         outputs_eda = self.student(input_ids, attn_mask)
         logits = outputs_eda.logits
@@ -182,7 +208,8 @@ class CRTransformer(LightningModule):
         if stage:
             self.log(f"{stage}_loss_eda", loss_eda, on_step=False, on_epoch=True, prog_bar=True)
             self.log(f"{stage}_acc_eda", self.accuracy_eda, on_step=False, on_epoch=True, prog_bar=True)
-        
+
+        # textfooler test
         input_ids, attn_mask, labels = batch['tf']['input_ids'], batch['tf']['attention_mask'], batch['tf']['labels']
         outputs_tf = self.student(input_ids, attn_mask)
         logits = outputs_tf.logits
@@ -200,7 +227,7 @@ class CRTransformer(LightningModule):
         train_loss = forward_outputs['loss']
         #print(f"train loss: {train_loss}")
         preds, labels = forward_outputs['preds'], forward_outputs['labels']
-        self.accuracy(preds, labels)
+        self.accuracy_train(preds, labels)
         #b_input_ids = forward_outputs['input_ids']
         # Tensorboard logging for model graph and loss
         #self.logger.experiment.add_graph(self.model, input_to_model=b_input_ids, verbose=False, use_strict_trace=True)
@@ -262,9 +289,9 @@ class CRTransformer(LightningModule):
       # dataset setup
       if stage == "fit" or stage is None:
         # train dataset assign
-        train_path_ori = "../traindata/" + self.hparams.dataset_name_ori + "_train.csv"
-        train_path_str_adv = "../traindata/" + self.hparams.dataset_name_str_adv + "_train.csv"
-        train_path_weak_aug = "../traindata/" + self.hparams.dataset_name_weak_aug + "_train.csv"
+        train_path_ori = self.hparams.data_dir + self.hparams.dataset_name_ori + "_train.csv"
+        train_path_str_adv = self.hparams.data_dir + self.hparams.dataset_name_str_adv + "_train.csv"
+        train_path_weak_aug = self.hparams.data_dir + self.hparams.dataset_name_weak_aug + "_train.csv"
         # read/generate three ways dataset
         df_train_ori = pd.read_csv(train_path_ori)
         df_train_weak_aug = pd.read_csv(train_path_weak_aug)
@@ -279,9 +306,9 @@ class CRTransformer(LightningModule):
                                                 max_seq_length=self.hparams.max_seq_length)
         
         # val dataset assign
-        val_path_ori = "../traindata/" + self.hparams.dataset_name_ori + "_val.csv"
-        val_path_str_adv = "../traindata/" + self.hparams.dataset_name_str_adv + "_val.csv"
-        val_path_weak_aug = "../traindata/" + self.hparams.dataset_name_weak_aug + "_val.csv"
+        val_path_ori = self.hparams.data_dir + self.hparams.dataset_name_ori + "_val.csv"
+        val_path_str_adv = self.hparams.data_dir + self.hparams.dataset_name_str_adv + "_val.csv"
+        val_path_weak_aug = self.hparams.data_dir + self.hparams.dataset_name_weak_aug + "_val.csv"
         
         df_val_ori = pd.read_csv(val_path_ori)
         df_val_weak_aug = pd.read_csv(val_path_weak_aug)
@@ -302,10 +329,10 @@ class CRTransformer(LightningModule):
         
       if stage == "test" or stage is None:
         # test dataset assign
-        test_path_ori = "../traindata/" + self.hparams.testset_name_ori + "_test.csv"
-        test_path_ssmba = "../traindata/" + self.hparams.testset_name_ssmba + "_test.csv"
-        test_path_eda = "../traindata/" + self.hparams.testset_name_eda + "_test.csv"
-        test_path_tf = "../traindata/" + self.hparams.testset_name_tf + "_test.csv"        
+        test_path_ori = self.hparams.data_dir + self.hparams.testset_name_ori + "_test.csv"
+        test_path_ssmba = self.hparams.data_dir + self.hparams.testset_name_ssmba + "_test.csv"
+        test_path_eda = self.hparams.data_dir + self.hparams.testset_name_eda + "_test.csv"
+        test_path_tf = self.hparams.data_dir + self.hparams.testset_name_tf + "_test.csv"        
 
         df_test_ori = pd.read_csv(test_path_ori)
         df_test_ssmba = pd.read_csv(test_path_ssmba)
@@ -349,6 +376,7 @@ class CRTransformer(LightningModule):
         parser = argparse.ArgumentParser(parents=[parent_parser])
         # config parameters
         parser.add_argument("--accumulate_grad_batches", type=int, default=1)
+        parser.add_argument("--data_dir", type=str, default="../traindata")
         parser.add_argument("--model_name", type=str, default="bert-base-uncased")
         parser.add_argument("--dataset_name_ori", type=str, default="agnews")
         parser.add_argument("--dataset_name_str_adv", type=str, default="agnews_ssmba")
@@ -366,14 +394,16 @@ class CRTransformer(LightningModule):
         # model parameters
         parser.add_argument("--lr", type=float, default=2e-5)
         parser.add_argument("--num_labels", type=int, default=4)
-        parser.add_argument("--lamb", type=float, default=0.5)
-        parser.add_argument("--loss_func", choices=['l1_smooth', 'KL', 'JS'], 
+        parser.add_argument("--lamb", type=float, default=1.0)
+        parser.add_argument("--loss_func", choices=['l1_smooth', 'KL', 'JS'],
                             type=str, default="l1_smooth")
         parser.add_argument("--loss_beta", type=float, default=1.0)
         parser.add_argument("--weight_decay", type=float, default=0.0)
         parser.add_argument('--momentum_teacher', default=0.996, type=float)
         parser.add_argument("--scheduler_name", choices=['linear', 'cosine'],
                             type=str, default="cosine")
-        parser.add_argument("--top_k_layers", type=int, default=3) 
+        parser.add_argument("--top_k_layers", type=int, default=3)
+        parser.add_argument("--T", type=float, default=0.5) 
+        parser.add_argument("--con_coeff", type=float, default=1.0)
         return parser
 

@@ -5,6 +5,7 @@ import logging
 from pytorch_lightning import Trainer, LightningModule, seed_everything
 from pytorch_lightning.callbacks import TQDMProgressBar, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.trainer.supporters import CombinedLoader
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import Dataset, DataLoader, RandomSampler, random_split
@@ -30,7 +31,12 @@ class LitTransformer(LightningModule):
         self.batch_size = args.batch_size
         self.max_seq_length = args.max_seq_length
         self.model_name = args.model_name
-
+        
+        self.testset_name_ori = args.testset_name_ori
+        self.testset_name_ssmba = args.testset_name_ssmba
+        self.testset_name_eda = args.testset_name_eda
+        self.testset_name_tf = args.testset_name_tf
+        
         # Dataset specific attributes
         self.num_labels = args.num_labels
         self.num_workers = args.num_workers
@@ -53,6 +59,10 @@ class LitTransformer(LightningModule):
 
         # Define metrics
         self.accuracy = Accuracy()
+        self.accuracy_ori = Accuracy()
+        self.accuracy_ssmba = Accuracy()
+        self.accuracy_eda = Accuracy()
+        self.accuracy_tf = Accuracy()
         self.f1 = F1Score()
 
     #############################
@@ -72,6 +82,56 @@ class LitTransformer(LightningModule):
         preds = torch.argmax(logits, dim=1)
         return {'loss': loss, 'preds': preds, 'input_ids': b_input_ids, 
                 'labels': b_labels, 'logits': logits, 'hidden_states': hidden_states}
+
+    def _test(self, batch, stage=None):
+        input_ids, attn_mask, labels = batch['ori']['input_ids'], batch['ori']['attention_mask'], batch['ori']['labels']
+        #print(f"input_ids: {input_ids.shape}")
+        outputs_ori = self.model(input_ids, attn_mask)
+        logits = outputs_ori.logits
+        hidden_states = outputs_ori.hidden_states
+        criterion = nn.CrossEntropyLoss()
+        loss_ori = criterion(logits, labels)
+        preds_ori = torch.argmax(logits, dim=1)
+        self.accuracy_ori(preds_ori, labels)
+        if stage:
+            self.log(f"{stage}_loss_ori", loss_ori, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"{stage}_acc_ori", self.accuracy_ori, on_step=False, on_epoch=True, prog_bar=True)
+ 
+        input_ids, attn_mask, labels = batch['ssmba']['input_ids'], batch['ssmba']['attention_mask'], batch['ssmba']['labels']
+        outputs_ssmba = self.model(input_ids, attn_mask)
+        logits = outputs_ssmba.logits
+        hidden_states = outputs_ssmba.hidden_states
+        criterion = nn.CrossEntropyLoss()
+        loss_ssmba = criterion(logits, labels)
+        preds_ssmba = torch.argmax(logits, dim=1)
+        self.accuracy_ssmba(preds_ssmba, labels)
+        if stage:
+            self.log(f"{stage}_loss_ssmba", loss_ssmba, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"{stage}_acc_ssmba", self.accuracy_ssmba, on_step=False, on_epoch=True, prog_bar=True)
+        
+        input_ids, attn_mask, labels = batch['eda']['input_ids'], batch['eda']['attention_mask'], batch['eda']['labels']
+        outputs_eda = self.model(input_ids, attn_mask)
+        logits = outputs_eda.logits
+        hidden_states = outputs_eda.hidden_states
+        criterion = nn.CrossEntropyLoss()
+        loss_eda = criterion(logits, labels)
+        preds_eda = torch.argmax(logits, dim=1)
+        self.accuracy_eda(preds_eda, labels)
+        if stage:
+            self.log(f"{stage}_loss_eda", loss_eda, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"{stage}_acc_eda", self.accuracy_eda, on_step=False, on_epoch=True, prog_bar=True)
+        
+        input_ids, attn_mask, labels = batch['tf']['input_ids'], batch['tf']['attention_mask'], batch['tf']['labels']
+        outputs_tf = self.model(input_ids, attn_mask)
+        logits = outputs_tf.logits
+        hidden_states = outputs_tf.hidden_states
+        criterion = nn.CrossEntropyLoss()
+        loss_tf = criterion(logits, labels)
+        preds_tf = torch.argmax(logits, dim=1)
+        self.accuracy_tf(preds_tf, labels)
+        if stage:
+            self.log(f"{stage}_loss_tf", loss_tf, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"{stage}_acc_tf", self.accuracy_tf, on_step=False, on_epoch=True, prog_bar=True)
 
     def training_step(self, batch, batch_idx):
         forward_outputs = self.forward_one_epoch(batch, batch_idx)
@@ -100,21 +160,22 @@ class LitTransformer(LightningModule):
         return val_loss
 
     def test_step(self, batch, batch_idx):
-        forward_outputs = self.forward_one_epoch(batch, batch_idx)
-        preds = forward_outputs['preds']
-        b_labels = forward_outputs['labels']
-        test_loss = forward_outputs['loss']
+        self._test(batch, stage="test")
+        #forward_outputs = self.forward_one_epoch(batch, batch_idx)
+        #preds = forward_outputs['preds']
+        #b_labels = forward_outputs['labels']
+        #test_loss = forward_outputs['loss']
         #cls_hidden_states = forward_outputs['hidden_states'][0][:, 0, :]
         # Reuse the validation_step for testing
         # Visualize dimensionality reduced labels
         # print(cls_hidden_states.shape)
         # print(b_labels.shape)
         #self.logger.experiment.add_embedding(cls_hidden_states, metadata=b_labels.tolist(), global_step=self.global_step)
-        self.accuracy(preds, b_labels)
-        self.f1(preds, b_labels)
-        self.log("test_acc", self.accuracy)
-        self.log("test_f1", self.f1)
-        return test_loss
+        #self.accuracy(preds, b_labels)
+        #self.f1(preds, b_labels)
+        #self.log("test_acc", self.accuracy)
+        #self.log("test_f1", self.f1)
+        #return test_loss
 
     def configure_optimizers(self):
         # set no decay for bias and normalziation weights
@@ -168,12 +229,24 @@ class LitTransformer(LightningModule):
         ab_size = self.trainer.accumulate_grad_batches * float(self.trainer.max_epochs)
         self.total_steps = (len(df_train) // tb_size) // ab_size
         print(f"total step: {self.total_steps}")
+
       if stage == "test" or stage is None:
         # test dataset assign
-        test_path = "./datasets/" + self.dataset_name + "_test.csv"
-        df_test = pd.read_csv(test_path)
-        logging.info("Preparing test data...")
-        self.ds_test = SequenceDataset(df_test, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
+        test_path_ori = "../traindata/" + self.testset_name_ori + "_test.csv"
+        test_path_ssmba = "../traindata/" + self.testset_name_ssmba + "_test.csv"
+        test_path_eda = "../traindata/" + self.testset_name_eda + "_test.csv"
+        test_path_tf = "../traindata/" + self.testset_name_tf + "_test.csv"        
+
+        df_test_ori = pd.read_csv(test_path_ori)
+        df_test_ssmba = pd.read_csv(test_path_ssmba)
+        df_test_eda = pd.read_csv(test_path_eda)
+        df_test_tf = pd.read_csv(test_path_tf)
+         
+        print("Testset Loading ...")
+        self.ds_test_ori = SequenceDataset(df_test_ori, self.testset_name_ori, self.tokenizer, max_seq_length=self.max_seq_length)
+        self.ds_test_ssmba = SequenceDataset(df_test_ssmba, self.testset_name_ssmba, self.tokenizer, max_seq_length=self.max_seq_length)
+        self.ds_test_eda = SequenceDataset(df_test_eda, self.testset_name_eda, self.tokenizer, max_seq_length=self.max_seq_length)
+        self.ds_test_tf = SequenceDataset(df_test_tf, self.testset_name_tf, self.tokenizer, max_seq_length=self.max_seq_length)
 
     def train_dataloader(self):
         return DataLoader(self.ds_train, batch_size=self.batch_size, num_workers=self.num_workers)
@@ -182,4 +255,11 @@ class LitTransformer(LightningModule):
         return DataLoader(self.ds_val, batch_size=self.batch_size, num_workers=self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(self.ds_test, batch_size=self.batch_size, num_workers=self.num_workers)
+        dl_test_ori = DataLoader(self.ds_test_ori, batch_size=self.batch_size, num_workers=self.num_workers)
+        dl_test_ssmba = DataLoader(self.ds_test_ssmba, batch_size=self.batch_size, num_workers=self.num_workers)
+        dl_test_eda = DataLoader(self.ds_test_eda, batch_size=self.batch_size, num_workers=self.num_workers)
+        dl_test_tf = DataLoader(self.ds_test_tf, batch_size=self.batch_size, num_workers=self.num_workers)
+        
+        loaders = {"ori": dl_test_ori, "ssmba": dl_test_ssmba, "eda": dl_test_eda, "tf": dl_test_tf}
+        combined_loader = CombinedLoader(loaders, mode='min_size')
+        return combined_loader   
