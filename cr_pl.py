@@ -39,7 +39,7 @@ class CRTransformer(LightningModule):
         self.accuracy_eda = Accuracy()
         self.accuracy_tf = Accuracy()
 
-        self.f1 = F1Score()
+        #self.f1 = F1Score()
     
     #############################
     # Training / Validation HOOKS
@@ -56,10 +56,14 @@ class CRTransformer(LightningModule):
         
         # Define model
         self.student = model_init(self.hparams.model_name, self.config)
-        self.teacher = copy.deepcopy(self.student)
+        if self.hparams.use_ema:
+            self.teacher = copy.deepcopy(self.student)
+        else:
+            self.teacher = self.student
         # there is no backpropagation through the teacher, so no need for gradients
-        for p in self.teacher.parameters():
-            p.requires_grad = False
+        if self.hparams.use_ema:
+            for p in self.teacher.parameters():
+                p.requires_grad = False
         
     @torch.no_grad()
     def _EMA_update(self, it):
@@ -90,13 +94,17 @@ class CRTransformer(LightningModule):
         
         input_ids, attn_mask, labels = batch['weak_aug']['input_ids'], batch['weak_aug']['attention_mask'], batch['weak_aug']['labels']
         outputs_weak_aug = self.student(input_ids, attn_mask)
-        
+
+        input_ids, attn_mask, labels = batch['eda']['input_ids'], batch['eda']['attention_mask'], batch['eda']['labels']
+        outputs_eda = self.student(input_ids, attn_mask)
+
+        criterion = nn.CrossEntropyLoss()
+ 
         if self.hparams.loss_func == 'l1_smooth': 
             # get hidden states
             hidden_states_weak_aug = outputs_weak_aug.hidden_states
             hidden_states_str_adv = outputs_str_adv.hidden_states
  
-            criterion = nn.CrossEntropyLoss()
             # calcualate self-supervised loss from cls embeddings
             for i in range(self.hparams.top_k_layers - 1):
                 cur_hidden = hidden_states_weak_aug[i][:, 0, :]
@@ -120,16 +128,17 @@ class CRTransformer(LightningModule):
             #print(f"y_aug: {y_adv.shape}")
             # calculate scaled smooth l1 loss
             sz = y_aug.size(-1)
-            loss_scale = 1 / math.sqrt(sz)
+            loss_scale = 1 / (math.sqrt(sz))
             selfsup_loss = loss_scale * F.smooth_l1_loss(y_aug.float(), y_adv.float(), reduction="none", beta=self.hparams.loss_beta).sum(dim=-1).sum()
             # calculate supervised loss from true label
             criterion = nn.CrossEntropyLoss()
-            logits = outputs_ori.logits
-            sup_loss = criterion(logits, labels)
+            logits_1 = outputs_ori.logits
+            logits_2 = outputs_eda.logits
+            sup_loss = self.hparams.lamb * (criterion(logits_1, labels) + criterion(logits_2, labels))
             # calculate final loss
-            loss = selfsup_loss + self.hparams.lamb * sup_loss
+            loss = selfsup_loss + sup_loss
             # get predict
-            preds = torch.argmax(logits, dim=1)
+            preds = torch.argmax(logits_1, dim=1)
         elif self.hparams.loss_func == 'JS' or self.hparams.loss_func == 'KL':
             # get all logits
             logits_ori = outputs_ori.logits
@@ -143,15 +152,21 @@ class CRTransformer(LightningModule):
                 selfsup_loss = _kl_div(logits_str_adv, logits_weak_aug, self.hparams.T)
                 selfsup_loss *= self.hparams.con_coeff
             # calculate supervised loss from true label
-            criterion = nn.CrossEntropyLoss()
-            logits = outputs_ori.logits
-            sup_loss = criterion(logits, labels)
+            logits_1 = outputs_ori.logits
+            logits_2 = outputs_eda.logits
+            if logits_1.shape[0] != logits_2.shape[0]:
+                print(logits_1)
+                print(logits_2)
+            sup_loss = self.hparams.lamb * (criterion(logits_1, labels) + criterion(logits_2, labels))
             # calculate final loss
-            loss = selfsup_loss + self.hparams.lamb * sup_loss
+            loss = selfsup_loss + sup_loss
             # get predict
-            preds = torch.argmax(logits, dim=1)
+            preds = torch.argmax(logits_1, dim=1)
         else:
             raise NotImplementedError()
+        # logs
+        self.log(f"train_suploss", sup_loss, on_step=True, on_epoch=False, prog_bar=True)
+        self.log(f"train_selfsuploss", selfsup_loss, on_step=True, on_epoch=False, prog_bar=True)
 
         return {'loss': loss, 'preds': preds, 'labels': labels}
    
@@ -241,11 +256,21 @@ class CRTransformer(LightningModule):
         #tb_size = self.hparams.batch_size * max(1, self.trainer.num_devices)
         it = self.global_step - (len(self.ds_val_ori) // self.hparams.batch_size) * self.current_epoch
         #print(it)
-        self._EMA_update(it)
+        if self.hparams.use_ema:
+            self._EMA_update(it)
         #print(self.total_train_steps)
         
     def validation_step(self, batch, batch_idx):
-        self.evaluate(batch, "val")
+        forward_outputs = self.forward_one_epoch(batch, batch_idx)
+        val_loss = forward_outputs['loss']
+        #self.accuracy_val(preds, labels)
+        # Tensorboard logging for model graph and loss
+        #self.logger.experiment.add_graph(self.model, input_to_model=b_input_ids, verbose=False, use_strict_trace=True)
+        #self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, self.global_stepself.log("train_loss", train_loss, on_epoch=False, on_step=True, prog_bar=True)
+        #`self.log("train_acc", self.accuracy, on_epoch=True, on_step=False, prog_bar=True)
+        self.log("val_loss", val_loss, on_epoch=True, on_step=False, prog_bar=True)
+        
+        #self.evaluate(batch, "val")
 
     def test_step(self, batch, batch_idx):
         #self.evaluate(batch, "test")
@@ -292,10 +317,12 @@ class CRTransformer(LightningModule):
         train_path_ori = self.hparams.data_dir + self.hparams.dataset_name_ori + "_train.csv"
         train_path_str_adv = self.hparams.data_dir + self.hparams.dataset_name_str_adv + "_train.csv"
         train_path_weak_aug = self.hparams.data_dir + self.hparams.dataset_name_weak_aug + "_train.csv"
+        train_path_eda = self.hparams.data_dir + self.hparams.dataset_name_eda + "_train.csv"
         # read/generate three ways dataset
         df_train_ori = pd.read_csv(train_path_ori)
         df_train_weak_aug = pd.read_csv(train_path_weak_aug)
         df_train_str_adv = pd.read_csv(train_path_str_adv)
+        df_train_eda = pd.read_csv(train_path_eda)
        
         print("Trainset Loading ...") 
         self.ds_train_ori = SequenceDataset(df_train_ori, self.hparams.dataset_name_ori, self.tokenizer,
@@ -304,23 +331,30 @@ class CRTransformer(LightningModule):
                                                  max_seq_length=self.hparams.max_seq_length)
         self.ds_train_str_adv = SequenceDataset(df_train_str_adv, self.hparams.dataset_name_weak_aug, self.tokenizer,
                                                 max_seq_length=self.hparams.max_seq_length)
-        
+        self.ds_train_eda = SequenceDataset(df_train_eda, self.hparams.dataset_name_eda, self.tokenizer,
+                                            max_seq_length=self.hparams.max_seq_length)
+
         # val dataset assign
         val_path_ori = self.hparams.data_dir + self.hparams.dataset_name_ori + "_val.csv"
         val_path_str_adv = self.hparams.data_dir + self.hparams.dataset_name_str_adv + "_val.csv"
         val_path_weak_aug = self.hparams.data_dir + self.hparams.dataset_name_weak_aug + "_val.csv"
+        val_path_eda = self.hparams.data_dir + self.hparams.dataset_name_eda + "_val.csv"
         
         df_val_ori = pd.read_csv(val_path_ori)
         df_val_weak_aug = pd.read_csv(val_path_weak_aug)
         df_val_str_adv = pd.read_csv(val_path_str_adv)
-        
+        df_val_eda = pd.read_csv(val_path_eda)        
+
         print("Valset Loading ...")
         self.ds_val_ori = SequenceDataset(df_val_ori, self.hparams.dataset_name_ori, self.tokenizer, 
                                           max_seq_length=self.hparams.max_seq_length)
-        #self.ds_val_weak_aug = SequenceDataset(df_val_weak_aug, self.hparams.dataset_name_str_adv, self.tokenizer, 
-        #                                       max_seq_length=self.hparams.max_seq_length)
-        #self.ds_val_str_adv = SequenceDataset(df_val_str_adv, self.hparams.dataset_name_weak_aug, self.tokenizer, 
-        #                                      max_seq_length=self.hparams.max_seq_length)
+        self.ds_val_weak_aug = SequenceDataset(df_val_weak_aug, self.hparams.dataset_name_str_adv, self.tokenizer, 
+                                               max_seq_length=self.hparams.max_seq_length)
+        self.ds_val_str_adv = SequenceDataset(df_val_str_adv, self.hparams.dataset_name_weak_aug, self.tokenizer, 
+                                              max_seq_length=self.hparams.max_seq_length)
+        self.ds_val_eda = SequenceDataset(df_val_eda, self.hparams.dataset_name_eda, self.tokenizer, 
+                                        max_seq_length=self.hparams.max_seq_length)
+
         # Calculate total steps
         tb_size = self.hparams.batch_size * max(1, self.trainer.num_devices)
         ab_size = self.trainer.accumulate_grad_batches * float(self.trainer.max_epochs)
@@ -349,17 +383,25 @@ class CRTransformer(LightningModule):
         self.ds_train_ori = DataLoader(self.ds_train_ori, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
         dl_train_weak_aug = DataLoader(self.ds_train_weak_aug, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
         dl_train_str_adv = DataLoader(self.ds_train_str_adv, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
-       
+        dl_train_eda = DataLoader(self.ds_train_eda, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)      
+ 
         # momentum parameter is increased to 1. during training with a cosine schedule
         self.momentum_schedule = cosine_scheduler(self.hparams.momentum_teacher, 1, self.hparams.max_epochs, 
                                                 len(self.ds_train_ori))
        
-        loaders = {"ori": self.ds_train_ori, "weak_aug": dl_train_weak_aug, "str_adv": dl_train_str_adv} 
+        loaders = {"ori": self.ds_train_ori, "weak_aug": dl_train_weak_aug, "str_adv": dl_train_str_adv, "eda": dl_train_eda} 
         combined_loader = CombinedLoader(loaders, mode='min_size')
         return combined_loader
     
     def val_dataloader(self): 
-        return DataLoader(self.ds_val_ori, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        self.ds_val_ori = DataLoader(self.ds_val_ori, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        dl_val_weak_aug = DataLoader(self.ds_val_weak_aug, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        dl_val_str_adv = DataLoader(self.ds_val_str_adv, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        dl_val_eda = DataLoader(self.ds_val_eda, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+
+        loaders = {"ori": self.ds_val_ori, "weak_aug": dl_val_weak_aug, "str_adv": dl_val_str_adv, "eda": dl_val_eda}      
+        combined_loader = CombinedLoader(loaders, mode='min_size')
+        return combined_loader
 
     def test_dataloader(self):
         dl_test_ori = DataLoader(self.ds_test_ori, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
@@ -376,11 +418,12 @@ class CRTransformer(LightningModule):
         parser = argparse.ArgumentParser(parents=[parent_parser])
         # config parameters
         parser.add_argument("--accumulate_grad_batches", type=int, default=1)
-        parser.add_argument("--data_dir", type=str, default="../traindata")
+        parser.add_argument("--data_dir", type=str, default="../traindata/")
         parser.add_argument("--model_name", type=str, default="bert-base-uncased")
         parser.add_argument("--dataset_name_ori", type=str, default="agnews")
         parser.add_argument("--dataset_name_str_adv", type=str, default="agnews_ssmba")
         parser.add_argument("--dataset_name_weak_aug", type=str, default="agnews_eda")
+        parser.add_argument("--dataset_name_eda", type=str, default="agnews_eda")
         parser.add_argument("--testset_name_ori", type=str, default="agnews")
         parser.add_argument("--testset_name_ssmba", type=str, default="agnews_ssmba")
         parser.add_argument("--testset_name_eda", type=str, default="agnews_eda")
@@ -405,5 +448,6 @@ class CRTransformer(LightningModule):
         parser.add_argument("--top_k_layers", type=int, default=3)
         parser.add_argument("--T", type=float, default=0.5) 
         parser.add_argument("--con_coeff", type=float, default=1.0)
+        parser.add_argument("--use_ema", action='store_true')
         return parser
 

@@ -19,25 +19,25 @@ def main(hparams):
     # 2 INIT CALLBACKS
     # ------------------------
     bar = TQDMProgressBar(refresh_rate=20, process_position=0)
-    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=3, verbose=False, mode="min")
+    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=2, verbose=False, mode="min")
     checkpoint_callback = ModelCheckpoint(
         save_top_k=1,
         verbose=True,
         monitor='val_loss',
         mode='min',
-        save_weights_only=False
+        save_weights_only=False,
+        dirpath=hparams.save_dir
     )
     
     # Define Logger
-    tb_logger = pl_loggers.TensorBoardLogger(save_dir=hparams.tb_save_dir) 
-
+    tb_logger = pl_loggers.TensorBoardLogger(save_dir=hparams.save_dir) 
     # ------------------------
     # 3 INIT TRAINER
     # ------------------------
     trainer = Trainer(precision=hparams.precision, devices=hparams.gpus, accelerator="gpu", num_nodes=hparams.num_nodes,
-                strategy=DDPStrategy(find_unused_parameters=False), max_epochs=hparams.max_epochs, 
-                logger=tb_logger, callbacks=[checkpoint_callback, early_stop_callback, bar]
-                )
+                    strategy=DDPStrategy(find_unused_parameters=False), max_epochs=hparams.max_epochs, 
+                    logger=tb_logger, callbacks=[checkpoint_callback, early_stop_callback, bar]
+                    )
 
     # ------------------------
     # 4 START TRAINING
@@ -49,6 +49,7 @@ def main(hparams):
         print("Test mode")
         # Test the model from loaded checkpoint
         checkpoint = torch.load(hparams.load_path)
+        #state_dict = {("student." + k): v for k, v in checkpoint['state_dict'].items()}
         model.load_state_dict(checkpoint['state_dict'])
         model.eval()
         trainer.test(model)
@@ -83,16 +84,17 @@ if __name__ == '__main__':
         default=16,
         help='default to use mixed precision 16'
     )
-    parent_parser.add_argument("--tb_save_dir", 
-                               type=str, 
-                               default="../",
-                               help='tensorboard save directory'
-                              )
+    parent_parser.add_argument(
+        "--save_dir", 
+        type=str,
+        default="./",
+        help='tensorboard/checkpoints save directory'
+    )
 
     # each LightningModule defines arguments relevant to it
     parser = CRTransformer.add_model_specific_args(parent_parser, root_dir)
     hyperparams = parser.parse_args()
-  
+ 
     # ---------------------
     # RUN TRAINING
     # ---------------------

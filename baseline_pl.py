@@ -26,7 +26,8 @@ class LitTransformer(LightningModule):
         # Set our init args as class attributes
         self.num_devices = args.num_devices
         self.accumulate_grad_batches = args.accumulate_grad_batches
-        self.dataset_name = args.dataset_name
+        self.dataset_name_ori = args.dataset_name_ori
+        self.dataset_name_eda = args.dataset_name_eda
         self.learning_rate = args.lr
         self.batch_size = args.batch_size
         self.max_seq_length = args.max_seq_length
@@ -73,15 +74,24 @@ class LitTransformer(LightningModule):
         return self.model(**inputs)
 
     def forward_one_epoch(self, batch, batch_idx):
-        b_input_ids, b_attn_mask, b_labels = batch['input_ids'], batch['attention_mask'], batch['labels']
-        outputs = self.model(b_input_ids, b_attn_mask)
-        logits = outputs.logits
-        hidden_states = outputs.hidden_states
+        # ori loss
+        input_ids, attn_mask, labels = batch['ori']['input_ids'], batch['ori']['attention_mask'], batch['ori']['labels']
+        outputs_ori = self.model(input_ids, attn_mask)
+        logits = outputs_ori.logits
+        hidden_states = outputs_ori.hidden_states
         criterion = nn.CrossEntropyLoss()
-        loss = criterion(logits, b_labels)
+        loss_ori = criterion(logits, labels)
+        # eda loss
+        input_ids, attn_mask, labels = batch['eda']['input_ids'], batch['eda']['attention_mask'], batch['eda']['labels']
+        outputs_eda = self.model(input_ids, attn_mask)
+        logits = outputs_eda.logits
+        hidden_states = outputs_eda.hidden_states
+        loss_eda = criterion(logits, labels)
+        # total loss
+        loss = loss_ori + loss_eda
         preds = torch.argmax(logits, dim=1)
-        return {'loss': loss, 'preds': preds, 'input_ids': b_input_ids, 
-                'labels': b_labels, 'logits': logits, 'hidden_states': hidden_states}
+        return {'loss': loss, 'preds': preds, 'input_ids': input_ids, 
+                'labels': labels, 'logits': logits, 'hidden_states': hidden_states}
 
     def _test(self, batch, stage=None):
         input_ids, attn_mask, labels = batch['ori']['input_ids'], batch['ori']['attention_mask'], batch['ori']['labels']
@@ -108,7 +118,7 @@ class LitTransformer(LightningModule):
         if stage:
             self.log(f"{stage}_loss_ssmba", loss_ssmba, on_step=False, on_epoch=True, prog_bar=True)
             self.log(f"{stage}_acc_ssmba", self.accuracy_ssmba, on_step=False, on_epoch=True, prog_bar=True)
-        
+
         input_ids, attn_mask, labels = batch['eda']['input_ids'], batch['eda']['attention_mask'], batch['eda']['labels']
         outputs_eda = self.model(input_ids, attn_mask)
         logits = outputs_eda.logits
@@ -136,7 +146,7 @@ class LitTransformer(LightningModule):
     def training_step(self, batch, batch_idx):
         forward_outputs = self.forward_one_epoch(batch, batch_idx)
         train_loss = forward_outputs['loss']
-        b_input_ids = forward_outputs['input_ids']
+        # input_ids = forward_outputs['input_ids']
         # Tensorboard logging for model graph and loss
         #self.logger.experiment.add_graph(self.model, input_to_model=b_input_ids, verbose=False, use_strict_trace=True)
         #self.logger.experiment.add_scalars('loss', {'train_loss': train_loss}, self.global_step)
@@ -149,14 +159,14 @@ class LitTransformer(LightningModule):
         preds = forward_outputs['preds']
         labels = forward_outputs['labels']
         self.accuracy(preds, labels)
-        self.f1(preds, labels)
+        #self.f1(preds, labels)
         # Calling self.log will surface up scalars for you in TensorBoard
         #self.logger.experiment.add_scalars('loss', {'val_loss': val_loss}, self.global_step)
         self.log("val_loss", val_loss, on_step=False, on_epoch=True, prog_bar=True)
         # self.log("val_acc", self.accuracy, on_epoch=True, on_step=False, prog_bar=True)
         # self.log("val_f1", self.f1, on_epoch=True, on_step=False, prog_bar=True)
         self.log("val_acc", self.accuracy, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("val_f1", self.f1, on_step=False, on_epoch=True, prog_bar=True)
+        #self.log("val_f1", self.f1, on_step=False, on_epoch=True, prog_bar=True)
         return val_loss
 
     def test_step(self, batch, batch_idx):
@@ -215,19 +225,31 @@ class LitTransformer(LightningModule):
       # dataset setup
       if stage == "fit" or stage is None:
         # train dataset assign
-        train_path = "./datasets/" + self.dataset_name + "_train.csv"
-        df_train = pd.read_csv(train_path)
-        logging.info("Preparing training data...")
-        self.ds_train = SequenceDataset(df_train, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
+        train_path_ori = "../traindata/" + self.dataset_name_ori + "_train.csv"
+        df_train_ori = pd.read_csv(train_path_ori)
+        logging.info("Preparing ori training data...")
+        self.ds_train_ori = SequenceDataset(df_train_ori, self.dataset_name_ori, self.tokenizer, max_seq_length=self.max_seq_length)
+
+        train_path_eda = "../traindata/" + self.dataset_name_eda + "_train.csv"
+        df_train_eda = pd.read_csv(train_path_eda)
+        logging.info("Preparing eda training data...")
+        self.ds_train_eda = SequenceDataset(df_train_eda, self.dataset_name_eda, self.tokenizer, max_seq_length=self.max_seq_length)
+ 
         # val dataset assign
-        val_path = "./datasets/" + self.dataset_name + "_val.csv"
-        df_val = pd.read_csv(val_path)
-        logging.info("Preparing validation data...")
-        self.ds_val = SequenceDataset(df_val, self.dataset_name, self.tokenizer, max_seq_length=self.max_seq_length)
+        val_path_ori = "../traindata/" + self.dataset_name_ori + "_val.csv"
+        df_val_ori = pd.read_csv(val_path_ori)
+        logging.info("Preparing ori validation data...")
+        self.ds_val_ori = SequenceDataset(df_val_ori, self.dataset_name_ori, self.tokenizer, max_seq_length=self.max_seq_length)
+
+        val_path_eda = "../traindata/" + self.dataset_name_eda + "_val.csv"
+        df_val_eda = pd.read_csv(val_path_eda)
+        logging.info("Preparing eda validation data...")
+        self.ds_val_eda = SequenceDataset(df_val_eda, self.dataset_name_eda, self.tokenizer, max_seq_length=self.max_seq_length)
+ 
         # Calculate total steps
         tb_size = self.batch_size * max(1, self.trainer.gpus)
         ab_size = self.trainer.accumulate_grad_batches * float(self.trainer.max_epochs)
-        self.total_steps = (len(df_train) // tb_size) // ab_size
+        self.total_steps = (len(df_train_ori) // tb_size) // ab_size
         print(f"total step: {self.total_steps}")
 
       if stage == "test" or stage is None:
@@ -241,7 +263,7 @@ class LitTransformer(LightningModule):
         df_test_ssmba = pd.read_csv(test_path_ssmba)
         df_test_eda = pd.read_csv(test_path_eda)
         df_test_tf = pd.read_csv(test_path_tf)
-         
+
         print("Testset Loading ...")
         self.ds_test_ori = SequenceDataset(df_test_ori, self.testset_name_ori, self.tokenizer, max_seq_length=self.max_seq_length)
         self.ds_test_ssmba = SequenceDataset(df_test_ssmba, self.testset_name_ssmba, self.tokenizer, max_seq_length=self.max_seq_length)
@@ -249,17 +271,26 @@ class LitTransformer(LightningModule):
         self.ds_test_tf = SequenceDataset(df_test_tf, self.testset_name_tf, self.tokenizer, max_seq_length=self.max_seq_length)
 
     def train_dataloader(self):
-        return DataLoader(self.ds_train, batch_size=self.batch_size, num_workers=self.num_workers)
+        dl_train_ori = DataLoader(self.ds_train_ori, batch_size=self.batch_size, num_workers=self.num_workers)
+        dl_train_eda = DataLoader(self.ds_train_eda, batch_size=self.batch_size, num_workers=self.num_workers)
+        loaders = {"ori": dl_train_ori, "eda": dl_train_eda}
+        combined_loader = CombinedLoader(loaders, mode='min_size')
+        return combined_loader
 
     def val_dataloader(self):
-        return DataLoader(self.ds_val, batch_size=self.batch_size, num_workers=self.num_workers)
+        dl_val_ori = DataLoader(self.ds_val_ori, batch_size=self.batch_size, num_workers=self.num_workers)
+        dl_val_eda = DataLoader(self.ds_val_eda, batch_size=self.batch_size, num_workers=self.num_workers)
+        loaders = {"ori": dl_val_ori, "eda": dl_val_eda}
+        combined_loader = CombinedLoader(loaders, mode='min_size')
+        return combined_loader
 
     def test_dataloader(self):
         dl_test_ori = DataLoader(self.ds_test_ori, batch_size=self.batch_size, num_workers=self.num_workers)
         dl_test_ssmba = DataLoader(self.ds_test_ssmba, batch_size=self.batch_size, num_workers=self.num_workers)
         dl_test_eda = DataLoader(self.ds_test_eda, batch_size=self.batch_size, num_workers=self.num_workers)
         dl_test_tf = DataLoader(self.ds_test_tf, batch_size=self.batch_size, num_workers=self.num_workers)
-        
+ 
         loaders = {"ori": dl_test_ori, "ssmba": dl_test_ssmba, "eda": dl_test_eda, "tf": dl_test_tf}
         combined_loader = CombinedLoader(loaders, mode='min_size')
-        return combined_loader   
+        return combined_loader
+ 
