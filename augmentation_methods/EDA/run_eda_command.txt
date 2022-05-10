@@ -1,0 +1,13 @@
+"""
+An example command of running EDA augmentation on snli_val dataset.
+"""
+
+python EDA_augmentation.py\
+		--output_file "output_file.csv"\
+		--train_orig "snli_val.csv"\
+		--alpha_sr 0.05\
+		--alpha_ri 0.05\
+		--alpha_rs 0.05\
+		--alpha_rd 0.05\
+		--num_aug 1
+
