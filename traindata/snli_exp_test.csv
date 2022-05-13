@@ -1,0 +1,101 @@
+premise,hypothesis,label
+This church choir sings to the masses as they sing joyous songs from the book at a church.,The church has cracks in the ceiling.,1
+This church choir sings to the masses as they sing joyous songs from the book at a church.,The church is filled with song.,0
+This church choir sings to the masses as they sing joyous songs from the book at a church.,A choir singing at a baseball game.,2
+"A woman with a green headscarf, blue shirt and a very big grin.",The woman is young.,1
+"A woman with a green headscarf, blue shirt and a very big grin.",The woman is very happy.,0
+"A woman with a green headscarf, blue shirt and a very big grin.",The woman has been shot.,2
+An old man with a package poses in front of an advertisement.,A man poses in front of an ad.,0
+An old man with a package poses in front of an advertisement.,A man poses in front of an ad for beer.,1
+An old man with a package poses in front of an advertisement.,A man walks by an ad.,2
+A statue at a museum that no seems to be looking at.,The statue is offensive and people are mad that it is on display.,1
+A statue at a museum that no seems to be looking at.,There is a statue that not many people seem to be interested in.,0
+A statue at a museum that no seems to be looking at.,Tons of people are gathered around the statue.,2
+A land rover is being driven across a river.,A Land Rover is splashing water as it crosses a river.,0
+A land rover is being driven across a river.,A vehicle is crossing a river.,0
+A land rover is being driven across a river.,A sedan is stuck in the middle of a river.,2
+A man playing an electric guitar on stage.,A man playing banjo on the floor.,2
+A man playing an electric guitar on stage.,A man playing guitar on stage.,0
+A man playing an electric guitar on stage.,A man is performing for cash.,1
+A blond-haired doctor and her African american assistant looking threw new medical manuals.,A doctor is looking at a book,0
+A blond-haired doctor and her African american assistant looking threw new medical manuals.,A man is eating pb and j,2
+A blond-haired doctor and her African american assistant looking threw new medical manuals.,A doctor is studying,1
+"One tan girl with a wool hat is running and leaning over an object, while another person in a wool hat is sitting on the ground.",A boy runs into a wall,2
+"One tan girl with a wool hat is running and leaning over an object, while another person in a wool hat is sitting on the ground.",A tan girl runs leans over an object,0
+"One tan girl with a wool hat is running and leaning over an object, while another person in a wool hat is sitting on the ground.",A man watches his daughter leap,1
+A young family enjoys feeling ocean waves lap at their feet.,A young man and woman take their child to the beach for the first time.,1
+A young family enjoys feeling ocean waves lap at their feet.,A family is out at a restaurant.,2
+A young family enjoys feeling ocean waves lap at their feet.,A family is at the beach.,0
+A couple walk hand in hand down a street.,A couple is walking together.,0
+A couple walk hand in hand down a street.,The couple is married.,1
+A couple walk hand in hand down a street.,A couple is sitting on a bench.,2
+3 young man in hoods standing in the middle of a quiet street facing the camera.,Three people sit by a busy street bareheaded.,2
+3 young man in hoods standing in the middle of a quiet street facing the camera.,Three hood wearing people pose for a picture.,0
+3 young man in hoods standing in the middle of a quiet street facing the camera.,Three hood wearing people stand in a street.,0
+A man reads the paper in a bar with green lighting.,The man is inside.,0
+A man reads the paper in a bar with green lighting.,The man is reading the sportspage.,1
+A man reads the paper in a bar with green lighting.,The man is climbing a mountain.,2
+Three firefighter come out of subway station.,Three firefighters putting out a fire inside of a subway station.,1
+Three firefighter come out of subway station.,Three firefighters coming up from a subway station.,0
+Three firefighter come out of subway station.,Three firefighters playing cards inside a fire station.,2
+"A person wearing a straw hat, standing outside working a steel apparatus with a pile of coconuts on the ground.",A person is near a pile of coconuts.,0
+"A person wearing a straw hat, standing outside working a steel apparatus with a pile of coconuts on the ground.",A person is selling coconuts.,1
+"A person wearing a straw hat, standing outside working a steel apparatus with a pile of coconuts on the ground.",A person is burning a straw hat.,2
+Male in a blue jacket decides to lay in the grass.,The guy in yellow is rolling on the grass,2
+Male in a blue jacket decides to lay in the grass.,The guy wearing a blue jacket is laying on the green grass,0
+Male in a blue jacket decides to lay in the grass.,The guy wearing a blue jacket is laying on the green grass taking a nap.,1
+During calf roping a cowboy calls off his horse.,A first time roper falls off his horse.,1
+During calf roping a cowboy calls off his horse.,A man ropes a calf successfully.,2
+A little boy in a gray and white striped sweater and tan pants is playing on a piece of playground equipment.,A boy is on a playground.,0
+A little boy in a gray and white striped sweater and tan pants is playing on a piece of playground equipment.,The boy is playing on the swings after school.,1
+A little boy in a gray and white striped sweater and tan pants is playing on a piece of playground equipment.,The boy is sitting on the school bus on his way home.,2
+A woman wearing a ball cap squats down to touch the cracked earth.,An archeologist wearing a hat squats to examine the site for a dig,1
+A woman wearing a ball cap squats down to touch the cracked earth.,A squatting woman wearing a hat touching the ground.,0
+A woman wearing a ball cap squats down to touch the cracked earth.,A woman wearing a sun bonnet planting a garden.,2
+Two children re laying on a rug with some wooden bricks laid out in a square between them.,Two children are building a brick furnace.,1
+Two children re laying on a rug with some wooden bricks laid out in a square between them.,Two children are playing catch at a park.,2
+Two children re laying on a rug with some wooden bricks laid out in a square between them.,Two children are on a rug.,0
+A man standing in front of a building on the phone as two men to the side pain on the side.,a guy near a building stands by two other men,0
+A man standing in front of a building on the phone as two men to the side pain on the side.,two girls walk through a hall,2
+A man standing in front of a building on the phone as two men to the side pain on the side.,a busy man stands with bodyguards,1
+"The two young girls are dressed as fairies, and are playing in the leaves outdoors.",Girls are playing outdoors.,0
+"The two young girls are dressed as fairies, and are playing in the leaves outdoors.",Two girls play dress up indoors.,2
+"The two young girls are dressed as fairies, and are playing in the leaves outdoors.",The two girls play in the Autumn.,1
+People jump over a mountain crevasse on a rope.,Some people look visually afraid to jump.,1
+People jump over a mountain crevasse on a rope.,People are jumping outside.,0
+People jump over a mountain crevasse on a rope.,People slide over a mountain crevasse on a slide.,2
+A snowboarder on a wide plain of snow,A snow field with a snowboarder on it,0
+A snowboarder on a wide plain of snow,A snowboarder gliding over a field of snow,1
+A snowboarder on a wide plain of snow,A snowmobile in a blizzard,1
+An older women tending to a garden.,The lady is cooking dinner,2
+An older women tending to a garden.,The lady is weeding her garden,1
+An older women tending to a garden.,The lady has a garden,0
+A man in a black shirt overlooking bike maintenance.,A man destroys a bike.,2
+A man in a black shirt overlooking bike maintenance.,A man watches bike repairs.,0
+A man in a black shirt overlooking bike maintenance.,A man learns bike maintenance.,1
+A man in a black shirt is looking at a bike in a workshop.,A man is wearing a red shirt,2
+A man in a black shirt is looking at a bike in a workshop.,A man is in a black shirt,0
+A man in a black shirt is looking at a bike in a workshop.,A man is deciding which bike to buy,1
+A man looking over a bicycle's rear wheel in the maintenance garage with various tools visible in the background.,A person is in a garage.,0
+A man looking over a bicycle's rear wheel in the maintenance garage with various tools visible in the background.,A man repairs bicycles.,0
+A man looking over a bicycle's rear wheel in the maintenance garage with various tools visible in the background.,A man waits outside a garage.,2
+"Three people sit on a bench at a station, the man looks oddly at the two women, the redheaded women looks up and forward in an awkward position, and the yellow blond girl twiddles with her hair.",Some people stand around.,2
+"Three people sit on a bench at a station, the man looks oddly at the two women, the redheaded women looks up and forward in an awkward position, and the yellow blond girl twiddles with her hair.",People run together.,2
+"Three people sit on a bench at a station, the man looks oddly at the two women, the redheaded women looks up and forward in an awkward position, and the yellow blond girl twiddles with her hair.",People wait at a station.,0
+A child wearing a red top is standing behind a blond headed child sitting in a wheelbarrow.,A child wearing a red top is standing behind a blond headed child,0
+A child wearing a red top is standing behind a blond headed child sitting in a wheelbarrow.,A child wearing a red top is standing on top of a blond headed child,2
+A child wearing a red top is standing behind a blond headed child sitting in a wheelbarrow.,A child wearing a red top is standing behind a pretty blond headed child,1
+"A person dressed in a dress with flowers and a stuffed bee attached to it, is pushing a baby stroller down the street.",A lady sitting on a bench in the park.,2
+"A person dressed in a dress with flowers and a stuffed bee attached to it, is pushing a baby stroller down the street.",An old lady pushing a stroller down a busy street.,1
+"A person dressed in a dress with flowers and a stuffed bee attached to it, is pushing a baby stroller down the street.",A person outside pushing a stroller.,0
+A dog jumping for a Frisbee in the snow.,A pet is enjoying a game of fetch with his owner.,1
+A dog jumping for a Frisbee in the snow.,A cat washes his face and whiskers with his front paw.,2
+A dog jumping for a Frisbee in the snow.,"An animal is outside in the cold weather, playing with a plastic toy.",0
+People are conversing at a dining table under a canopy.,People at a party are seated for dinner on the lawn.,1
+People are conversing at a dining table under a canopy.,People are talking underneath a covering.,0
+People are conversing at a dining table under a canopy.,People are screaming at a boxing match.,2
+A girl playing a violin along with a group of people,A girl is washing a load of laundry.,2
+A girl playing a violin along with a group of people,A girl is playing an instrument.,0
+A girl playing a violin along with a group of people,A group of people are playing in a symphony.,1
+A woman within an orchestra is playing a violin.,A woman is playing a concert.,1
+A woman within an orchestra is playing a violin.,A woman is playing the violin.,0
