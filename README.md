@@ -35,11 +35,11 @@ python ./baseline_main.py --num_nodes 1 --num_devices 1 --model_name "bert-base-
 ## To Train
 ---------------------
 ```
-python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 1 --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 16 --max_seq_length 256 --lr_backbone 5e-5 --lr_projector 1e-3 --mode "train" --lr 2e-5 --num_labels 4 --scheduler_name "cosine" --dataset_name_ori "agnews" --dataset_name_str_adv "agnews_ssmba" --dataset_name_weak_aug "agnews_synonym" --tb_save_dir "./" --loss_func "l1_smooth" --top_k_layers 5 --use_ema --use_projector --mlp "2048-1024-768"
+python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 1 --data_dir "../traindata/" --model_name "bert-base-uncased" --num_workers 10 --max_epochs 10 --batch_size 16 --max_seq_length 256 --lr_backbone 5e-5 --lr_projector 1e-3 --mode "train" --num_labels 4 --scheduler_name "cosine" --dataset_name_ori "agnews" --dataset_name_str_adv "agnews_ssmba" --dataset_name_weak_aug "agnews_synonym" --save_dir "./lightning_logs" --loss_func "l1_smooth" --top_k_layers 5 --use_ema --use_projector --mlp "2048-1024-768"
 ```
 
 ## To Test
 ---------------------
 ```
-python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 1 --model_name "bert-base-uncased" --num_workers 10 --max_epochs 10 --batch_size 16 --max_seq_length 256 --mode "test" --num_labels 4 --scheduler_name "cosine" --testset "agnews" --tb_save_dir "./" --load_path "./lightning_logs/agnews_l1_smooth_5layers_ssmba_eda_projector2048-1024-768_ema_b1" --use_ema --use_projector --mlp "2048-1024-768" --top_k_layers 5
+python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 1 --data_dir "../traindata/" --model_name "bert-base-uncased" --num_workers 10 --max_epochs 10 --batch_size 16 --max_seq_length 256 --mode "test" --num_labels 4 --scheduler_name "cosine" --testset "agnews" --save_dir "./lightning_logs" --load_path "./lightning_logs/agnews_l1_smooth_5layers_ssmba_eda_projector2048-1024-768_ema_b16" --use_ema --use_projector --mlp "2048-1024-768" --top_k_layers 5
 ```
