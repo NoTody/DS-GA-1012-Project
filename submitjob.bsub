@@ -1,0 +1,22 @@
+#BSUB -J "agnews_l1_smooth_4layers_ssmba_eda_projector2048-1024-768_resume"
+#BSUB -R "rusage[mem=4]"
+#BSUB -q gpu32
+#BSUB -n 10
+#BSUB -gpu "num=2:mode=shared:j_exclusive=yes"
+#BSUB -e agnews_l1_smooth_4layers_ssmba_eda_projector2048-1024-768_resume.err
+#BSUB -o agnews_l1_smooth_4layers_ssmba_eda_projector2048-1024-768_resume.out
+
+. /gpfs/share/skynet/apps/anaconda3/etc/profile.d/conda.sh
+conda activate opence_env_1.5.1
+
+python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 2 --data_dir "../traindata/" --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 16 --max_seq_length 256 --mode "train" --lr_backbone 4e-5 --lr_projector 1e-3 --num_labels 4 --scheduler_name "cosine" --dataset_name_ori "agnews" --dataset_name_str_adv "agnews_ssmba" --dataset_name_weak_aug "agnews_eda" --dataset_name_eda "agnews_eda" --save_dir "./lightning_logs/agnews_l1_smooth_4layers_ssmba_eda_projector2048-1024-768_ema_b16_v3" --top_k_layers 4 --loss_func "l1_smooth" --T 0.5 --use_projector --mlp "2048-1024-768" --use_ema
+
+#python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 2 --data_dir "../traindata/" --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 8 --max_seq_length 512 --mode "train" --lr_backbone 1e-4 --lr_projector 1e-3 --num_labels 2 --scheduler_name "cosine" --dataset_name_ori "imdb" --dataset_name_str_adv "imdb_ssmba" --dataset_name_weak_aug "imdb_eda" --dataset_name_eda "imdb_eda" --save_dir "./lightning_logs/imdb_l1_smooth_4layers_ssmba_eda_projector2048-1024-768_ema_resume" --top_k_layers 4 --loss_func "l1_smooth" --T 0.5 --use_projector --mlp "2048-1024-768" --use_ema
+
+#python ./cr_main.py --use_ema --accumulate_grad_batches 1 --num_nodes 1 --gpus 2 --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 8 --max_seq_length 196 --mode "train" --lr 2e-5 --num_labels 3 --scheduler_name "cosine" --dataset_name_ori "snli" --dataset_name_eda "snli_eda" --dataset_name_str_adv "snli_ssmba" --dataset_name_weak_aug "snli_eda" --save_dir "./lightning_logs/snli_l1_smooth_3layers_ssmba_eda" --loss_func "l1_smooth" --top_k_layers 3
+
+#python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 2 --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 32 --max_seq_length 512 --mode "train" --lr 2e-5 --num_labels 2 --scheduler_name "cosine" --dataset_name_ori "imdb" --dataset_name_str_adv "imdb_ssmba" --dataset_name_weak_aug "imdb_random" --tb_save_dir "./" --loss_func "l1_smooth" --top_k_layers 4
+
+#python ./baseline_main.py --accumulate_grad_batches 1 --num_nodes 1 --num_devices 2 --model_name "bert-base-uncased" --dataset_name_ori "imdb" --dataset_name_eda "imdb_ssmba" --num_workers 10 --max_epochs 20 --batch_size 32 --max_seq_length 256 --mode "train" --lr 2e-5 --num_labels 3 --scheduler_name "cosine" --tb_save_dir "../"
+
+#python ./cr_main.py --accumulate_grad_batches 1 --num_nodes 1 --gpus 2 --model_name "bert-base-uncased" --num_workers 10 --max_epochs 20 --batch_size 32 --max_seq_length 384 --mode "train" --lr 2e-5 --num_labels 4 --scheduler_name "cosine" --dataset_name_ori "agnews" --dataset_name_str_adv "agnews_ssmba" --dataset_name_weak_aug "agnews_random" --tb_save_dir "./" --loss_func "l1_smooth" --top_k_layers 4

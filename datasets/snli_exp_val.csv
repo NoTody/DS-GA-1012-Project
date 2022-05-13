@@ -1,0 +1,101 @@
+premise,hypothesis,label
+Two women are embracing while holding to go packages.,The sisters are hugging goodbye while holding to go packages after just eating lunch.,1
+Two women are embracing while holding to go packages.,Two woman are holding packages.,0
+Two women are embracing while holding to go packages.,The men are fighting outside a deli.,2
+"Two young children in blue jerseys, one with the number 9 and one with the number 2 are standing on wooden steps in a bathroom and washing their hands in a sink.",Two kids in numbered jerseys wash their hands.,0
+"Two young children in blue jerseys, one with the number 9 and one with the number 2 are standing on wooden steps in a bathroom and washing their hands in a sink.",Two kids at a ballgame wash their hands.,1
+"Two young children in blue jerseys, one with the number 9 and one with the number 2 are standing on wooden steps in a bathroom and washing their hands in a sink.",Two kids in jackets walk to school.,2
+A man selling donuts to a customer during a world exhibition event held in the city of Angeles,A woman drinks her coffee in a small cafe.,2
+A man selling donuts to a customer during a world exhibition event held in the city of Angeles,A man selling donuts to a customer during a world exhibition event while people wait in line behind him.,1
+A man selling donuts to a customer during a world exhibition event held in the city of Angeles,A man selling donuts to a customer.,0
+"Two young boys of opposing teams play football, while wearing full protection uniforms and helmets.",boys play football,0
+"Two young boys of opposing teams play football, while wearing full protection uniforms and helmets.",dog eats out of bowl,2
+"Two young boys of opposing teams play football, while wearing full protection uniforms and helmets.",boys scoring a touchdown,1
+A man in a blue shirt standing in front of a garage-like structure painted with geometric designs.,A man is repainting a garage,1
+A man in a blue shirt standing in front of a garage-like structure painted with geometric designs.,A man is wearing a blue shirt,0
+A man in a blue shirt standing in front of a garage-like structure painted with geometric designs.,A man is wearing a black shirt,2
+"Under a blue sky with white clouds, a child reaches up to touch the propeller of a plane standing parked on a field of grass.",A child is reaching to touch the propeller of a plane.,0
+"Under a blue sky with white clouds, a child reaches up to touch the propeller of a plane standing parked on a field of grass.",A child is reaching to touch the propeller out of curiosity.,1
+"Under a blue sky with white clouds, a child reaches up to touch the propeller of a plane standing parked on a field of grass.",A child is playing with a ball.,2
+A woman is doing a cartwheel while wearing a bikini in the sand next to the beach.,A woman is doing a cartwheel.,0
+A woman is doing a cartwheel while wearing a bikini in the sand next to the beach.,A woman is fixing her home.,2
+A woman is doing a cartwheel while wearing a bikini in the sand next to the beach.,A woman is doing a cartwheel and falls on her head.,2
+Two men on bicycles competing in a race.,People are riding bikes.,0
+Two men on bicycles competing in a race.,Men are riding bicycles on the street.,1
+Two men on bicycles competing in a race.,A few people are catching fish.,2
+A young boy in a field of flowers carrying a ball,boy leaving baseball game,1
+A young boy in a field of flowers carrying a ball,boy in field,0
+A young boy in a field of flowers carrying a ball,dog in pool,2
+Families waiting in line at an amusement park for their turn to ride.,The restaurant is very bad.,2
+Families waiting in line at an amusement park for their turn to ride.,People are waiting in line at a restaurant.,2
+Families waiting in line at an amusement park for their turn to ride.,People are waiting to see a movie.,2
+A senior is waiting at the window of a restaurant that serves sandwiches.,A person waits to be served his food.,0
+A senior is waiting at the window of a restaurant that serves sandwiches.,A man is waiting in line for the bus.,2
+A senior is waiting at the window of a restaurant that serves sandwiches.,A man is looking to order a grilled cheese sandwich.,1
+"Man in a black suit, white shirt and black bowtie playing an instrument with the rest of his symphony surrounding him.",A person in a suit,0
+"Man in a black suit, white shirt and black bowtie playing an instrument with the rest of his symphony surrounding him.",Nobody has a suit,2
+"Man in a black suit, white shirt and black bowtie playing an instrument with the rest of his symphony surrounding him.",A tall person in a suit,1
+Two women having drinks and smoking cigarettes at the bar.,Two women are at a bar.,0
+Two women having drinks and smoking cigarettes at the bar.,Three women are at a bar.,2
+Two women having drinks and smoking cigarettes at the bar.,Women are celebrating at a bar.,1
+"At an outdoor event in an Asian-themed area, a crowd congregates as one person in a yellow Chinese dragon costume confronts the camera.",A single man is next to a camera,2
+"At an outdoor event in an Asian-themed area, a crowd congregates as one person in a yellow Chinese dragon costume confronts the camera.",A crowd is dancing,1
+"At an outdoor event in an Asian-themed area, a crowd congregates as one person in a yellow Chinese dragon costume confronts the camera.",A crowd is in front of a camera,1
+Two doctors perform surgery on patient.,Two surgeons are having lunch.,2
+Two doctors perform surgery on patient.,Doctors are performing surgery.,0
+Two doctors perform surgery on patient.,Two doctors are performing surgery on a man.,1
+A white dog with long hair jumps to catch a red and green toy.,A white dog with long hair is swimming underwater.,2
+A white dog with long hair jumps to catch a red and green toy.,An animal is jumping to catch an object.,0
+A white dog with long hair jumps to catch a red and green toy.,A white chihuahua mix with long curly hair is jumping to catch a red and green toy bone.,1
+Kids are on a amusement ride.,Kids ride their favorite amusement ride.,1
+Kids are on a amusement ride.,A car is broke down on the side of the road.,2
+Kids are on a amusement ride.,Kids ride an amusement ride.,0
+A man in a black shirt is playing golf outside.,A man plays on a golf course to relax.,1
+A man in a black shirt is playing golf outside.,The man in the black shirt trades Pokemon cards with his girlfriend.,2
+A man in a black shirt is playing golf outside.,The man wearing the black shirt plays a game of golf.,0
+A older gentleman finds it humorous that he is getting his picture taken while doing his laundry.,a blond man laughs while doing laundry,1
+A older gentleman finds it humorous that he is getting his picture taken while doing his laundry.,a guy laughs while doing laundry,0
+A older gentleman finds it humorous that he is getting his picture taken while doing his laundry.,two ladies pin clothes to dry,2
+An Indian woman is washing and cleaning dirty laundry at a lake and in the background is a kid who appears to have jumped into the lake.,An Indian woman is doing her laundry in a lake.,0
+An Indian woman is washing and cleaning dirty laundry at a lake and in the background is a kid who appears to have jumped into the lake.,An Indian woman is putting her laundry into the machine.,2
+An Indian woman is washing and cleaning dirty laundry at a lake and in the background is a kid who appears to have jumped into the lake.,An Indian woman is doing laundry for her son in the lake.,1
+A man in a green jersey and rollerskates stumbles as a man in a black jersey appears to collide with him.,They are driving cars.,2
+A man in a green jersey and rollerskates stumbles as a man in a black jersey appears to collide with him.,They both fall to the ground.,1
+A man in a green jersey and rollerskates stumbles as a man in a black jersey appears to collide with him.,The man stumbles stumbles in rollerskates.,0
+A group of onlookers glance at a person doing a strange trick on her head.,A boy does a card trick.,2
+A group of onlookers glance at a person doing a strange trick on her head.,Onlookers are impressed by the trick.,1
+A group of onlookers glance at a person doing a strange trick on her head.,People watch another person do a trick.,0
+The middle eastern woman wearing the pink headscarf is walking beside a woman in a purple headscarf.,Only one woman is wearing a head scarf.,2
+The middle eastern woman wearing the pink headscarf is walking beside a woman in a purple headscarf.,These two women are friends.,1
+"A taxi SUV drives past an urban construction site, as a man walks down the street in the other direction.",A man is chasing an SUV that is going in the same direction as him.,2
+"A taxi SUV drives past an urban construction site, as a man walks down the street in the other direction.",An SUV and a man are going in opposite directions.,0
+"A taxi SUV drives past an urban construction site, as a man walks down the street in the other direction.",A taxi SUV races to pick up some clients while a man walks peacefully in the other direction.,1
+People wearing red shirts are standing in a large pool of water as it splashes over and around them.,Nobody has a shirt on,2
+People wearing red shirts are standing in a large pool of water as it splashes over and around them.,A person in a shirt,0
+People wearing red shirts are standing in a large pool of water as it splashes over and around them.,A tall person in a shirt,1
+A man in a white t-shirt takes a picture in the middle of the street with two public buses in the background.,A man is wearing a black shirt,2
+A man in a white t-shirt takes a picture in the middle of the street with two public buses in the background.,A man is wearing a white shirt,0
+A man in a white t-shirt takes a picture in the middle of the street with two public buses in the background.,A man is taking photos while on tour in nyc,1
+A shirtless man is singing into a microphone while a woman next to him plays an accordion.,He is Polish.,1
+A shirtless man is singing into a microphone while a woman next to him plays an accordion.,He is playing a saxophone.,2
+A shirtless man is singing into a microphone while a woman next to him plays an accordion.,A man is singing into a microphone.,0
+Women and children sitting outside in the shade while a group of younger children sitting inside in the shade.,It is very sunny outside.,1
+Women and children sitting outside in the shade while a group of younger children sitting inside in the shade.,The woman and kids and sitting down.,0
+Women and children sitting outside in the shade while a group of younger children sitting inside in the shade.,The woman is running.,2
+A pregnant lady singing on stage while holding a flag behind her.,A woman is sick in bed.,2
+A pregnant lady singing on stage while holding a flag behind her.,A woman is making music.,0
+A pregnant lady singing on stage while holding a flag behind her.,A lady is participating in a talent show.,1
+The two farmers are working on a piece of John Deere equipment.,Men are working on John Deere equipment,0
+The two farmers are working on a piece of John Deere equipment.,John Deere equipment is being worked on by two farmers,0
+The two farmers are working on a piece of John Deere equipment.,2 Men are making a pool together,2
+A little boy in a blue shirt holding a toy.,Boy dressed in blue carrying toy to a toybox.,1
+A little boy in a blue shirt holding a toy.,Boy dressed in red lighting things on fire.,2
+A little boy in a blue shirt holding a toy.,Boy dressed in blue holds a toy.,0
+A woman is writing something on a post-it note which is hanging on a bulletin board with a lot of other post-it notes.,The woman is writing a grocery list.,1
+A woman is writing something on a post-it note which is hanging on a bulletin board with a lot of other post-it notes.,The woman is talking on the phone.,2
+A woman is writing something on a post-it note which is hanging on a bulletin board with a lot of other post-it notes.,The woman is writing a note.,0
+A baby at the end of a slip and slide at a party,The baby is wet.,0
+A baby at the end of a slip and slide at a party,The man is at the end of the slip and slide,2
+A baby at the end of a slip and slide at a party,There is a party,0
+A girl swings high in the air.,A girl is gaining momentum to flip off the swing,1
+A girl swings high in the air.,A girl is laying in the pool,2
