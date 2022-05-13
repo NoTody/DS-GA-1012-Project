@@ -8,6 +8,8 @@ cr_pl.py and cr_main.py are files for our method.
 
 "pl" postfix means the file contains pytorch-lightning model implementation for the given method, "main" postfix means the file is used for training/testing for the given method.
 
+All train/val/test data are in datasets folder. Adversarial and augmented samples generation code is in augmentation_methods folder
+
 # Run Example for Baseline with AGNews (1 node 1 gpu):
 
 ## train
