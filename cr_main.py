@@ -49,7 +49,6 @@ def main(hparams):
         print("Test mode")
         # Test the model from loaded checkpoint
         checkpoint = torch.load(hparams.load_path)
-        #state_dict = {("student." + k): v for k, v in checkpoint['state_dict'].items()}
         model.load_state_dict(checkpoint['state_dict'])
         model.eval()
         trainer.test(model)

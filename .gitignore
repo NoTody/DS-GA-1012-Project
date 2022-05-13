@@ -40,3 +40,4 @@ datasets/imdb_train.csv
 lightning_logs/
 *.err
 *.out
+*.bsub
