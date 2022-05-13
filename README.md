@@ -1,6 +1,6 @@
 DS-GA-1012-Project
 ======================
-NYU Natural Language Understanding Spring22 Project - On Defending Strong Adversarial Text Attacks with Semi-Supervised Adversarial Learning
+NYU Natural Language Understanding Spring22 Project - Self-Supervised Regularization on Improving Robustness of Semantically Fluent Adversarial Texts
 
 baseline_pl.py and baseline_main.py are files for baseline method.
 
