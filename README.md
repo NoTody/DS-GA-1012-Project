@@ -10,17 +10,18 @@ cr_pl.py and cr_main.py are files for our method.
 
 All train/val/test data are in datasets folder. Adversarial and augmented samples generation code is in augmentation_methods folder
 
+# To Install Dependencies
+---------------------
+```
+pip install -r requirement.txt
+```
+
 # Run Example for Baseline with AGNews (1 node 1 gpu):
 
 ## train
 ---------------------
 ```
 python ./baseline_main.py --accumulate_grad_batches 1 --num_nodes 1 --num_devices 1 --model_name "bert-base-uncased" --dataset_name "agnews" --num_workers 10 --max_epochs 10 --batch_size 32 --max_seq_length 256 --mode "train" --lr 2e-5 --num_labels 4 --scheduler_name "cosine" --tb_save_dir "../"
-```
-## To Install Dependencies
----------------------
-```
-pip install -r requirement.txt
 ```
 
 ## test
