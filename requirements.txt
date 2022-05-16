@@ -100,7 +100,6 @@ parso @ file:///opt/conda/conda-bld/parso_1641458642106/work
 partd @ file:///opt/conda/conda-bld/partd_1647245470509/work
 pexpect @ file:///tmp/build/80754af9/pexpect_1605563209008/work
 pickleshare @ file:///tmp/build/80754af9/pickleshare_1606932040724/work
-Pillow==8.4.0
 portpicker==1.3.1
 prettytable==3.2.0
 prometheus-client @ file:///opt/conda/conda-bld/prometheus_client_1643788673601/work
